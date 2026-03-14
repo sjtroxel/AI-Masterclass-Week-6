@@ -30,12 +30,12 @@ Complete these before writing a single line of application code.
 - [x] `.claude/skills/agent-review.md` — checks agent against AI_ARCHITECTURE.md: output interface, uncertainty fields, no self-reported confidence, no agent-to-agent calls
 
 ### 2. Monorepo & scaffolds
-- [ ] Monorepo initialized with npm workspaces (`client`, `server`, `shared`, `scripts`)
-- [ ] Angular 21 scaffold — blank app, Tailwind v4 configured, `.postcssrc.json` in place
-- [ ] **Mobile-first baseline**: bottom nav bar component, base Tailwind styles written at 375px, responsive breakpoints documented in `FRONTEND_ARCHITECTURE.md`
-- [ ] Express 5 scaffold — `app.ts` / `server.ts` split, middleware stack, typed error classes in place
-- [ ] Supabase project created, pgvector extension enabled
-- [ ] `shared/types.d.ts` with initial type stubs (`.d.ts` not `.ts` — prevents rootDir expansion)
+- [x] Monorepo initialized with npm workspaces (`client`, `server`, `shared`, `scripts`)
+- [x] Angular 21 scaffold — blank app, Tailwind v4 configured, `.postcssrc.json` in place
+- [x] **Mobile-first baseline**: bottom nav bar component, base Tailwind styles written at 375px, responsive breakpoints documented in `FRONTEND_ARCHITECTURE.md`
+- [x] Express 5 scaffold — `app.ts` / `server.ts` split, middleware stack, typed error classes in place
+- [x] Supabase project created, pgvector extension enabled
+- [x] `shared/types.d.ts` with initial type stubs (`.d.ts` not `.ts` — prevents rootDir expansion)
 
 ### 3. Project config & CI
 - [x] `CLAUDE.md` written — project overview, tech stack, dev commands, guardrails, mobile-first rule explicitly stated, git commit rule explicitly stated

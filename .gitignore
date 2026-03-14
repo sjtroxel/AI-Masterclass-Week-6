@@ -1,4 +1,29 @@
+# Secrets
 .env
 .env.*
 *.key
 *.pem
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.angular/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# Test output
+coverage/
+playwright-report/
+test-results/
