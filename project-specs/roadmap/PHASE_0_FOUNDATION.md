@@ -2,7 +2,7 @@
 
 **Goal**: A working, deployable, mobile-first skeleton with no AI features, plus all research and sourcing decisions locked down before code begins.
 
-**Status**: Not started
+**Status**: Complete — exit condition met
 
 ---
 
@@ -12,8 +12,8 @@ Complete these before writing a single line of application code.
 
 - [x] Register NASA API key at api.nasa.gov (free — takes minutes; needed for Phase 1)
 - [x] Register Voyage AI account and obtain API key at voyageai.com (needed for Phase 2 embeddings; register now so it's ready)
-- [ ] Compile and verify RAG document source list (see RAG Document Sourcing section below; must be locked before Phase 3)
-- [ ] Confirm mobile navigation pattern: **bottom nav bar on mobile, sidebar on desktop** (decided)
+- [x] Compile and verify RAG document source list (see RAG Document Sourcing section below; must be locked before Phase 3)
+- [x] Confirm mobile navigation pattern: **bottom nav bar on mobile, sidebar on desktop** (decided)
 
 ---
 
@@ -40,10 +40,10 @@ Complete these before writing a single line of application code.
 ### 3. Project config & CI
 - [x] `CLAUDE.md` written — project overview, tech stack, dev commands, guardrails, mobile-first rule explicitly stated, git commit rule explicitly stated
 - [x] `.claude/settings.json` deny rules (`.env*`, `*.key`, `*.pem`, `.aws/`, `.ssh/`)
-- [ ] Husky pre-commit hooks (lint + type-check)
-- [ ] gitleaks configured (pre-commit + GitHub Actions step)
-- [ ] GitHub Actions CI — install, type-check, lint, build (no tests yet — nothing to test)
-- [ ] `railway.toml` and Vercel config stubs (written and ready — deployment itself is Phase 8)
+- [x] Husky pre-commit hooks (lint + type-check)
+- [x] gitleaks configured (pre-commit + GitHub Actions step)
+- [x] GitHub Actions CI — install, type-check, lint, build (no tests yet — nothing to test)
+- [x] `railway.toml` and Vercel config stubs (written and ready — deployment itself is Phase 8)
 
 **Exit condition**: The skeleton runs locally. `GET /api/health` returns 200 locally. The Angular app loads on mobile (Chrome DevTools or real device). CI passes on push. No AI features, no NASA data.
 
@@ -63,20 +63,32 @@ Compile and verify this list before Phase 3 begins. For each document confirm: (
 | ESA Open Access | esa.int/Enabling_Support/Publications | Most ESA mission documentation |
 | JPL Technical Publications | jpl.nasa.gov/resources | NHATS methodology, SBDB documentation |
 
-### Target document list (verify each before Phase 3)
+### Target document list (verified 2026-03-14)
 
 **Science index** (hard facts):
-- [ ] OSIRIS-REx final sample analysis reports — NTRS
-- [ ] NASA Psyche mission science overview — NTRS or NASA Science
-- [ ] Bus-DeMeo (2009) spectral taxonomy paper — find arXiv preprint (original is paywalled)
-- [ ] ESA HERA mission documentation — ESA Open Access
-- [ ] JPL NHATS methodology document — JPL Technical Publications
+- [x] **OSIRIS-REx Bennu sample mineralogy** — Hamilton et al. (2024) — NASA public domain
+  - https://ntrs.nasa.gov/api/citations/20240000430/downloads/Hamilton-SSAWG_LPSC55_20240103_1366.pdf
+  - Note: The Lauretta et al. (2024) definitive paper in *Meteoritics & Planetary Science* (DOI 10.1111/maps.14227) may be paywalled; use the NTRS PDF above as primary source.
+- [x] **Psyche Mission Description and Design Rationale** — Polanskey, Elkins-Tanton et al. (2025) — CC BY-NC-ND 4.0
+  - https://pmc.ncbi.nlm.nih.gov/articles/PMC12521304/pdf/11214_2025_Article_1218.pdf
+- [x] **Bus-DeMeo asteroid spectral taxonomy** — DeMeo, Binzel, Slivan, Bus (2009) — HAL open archive (no arXiv preprint exists)
+  - https://hal.science/hal-00545286v1/file/PEER_stage2_10.1016%252Fj.icarus.2009.02.005.pdf
+  - Companion dataset: https://sbn.psi.edu/pds/resource/busdemeotax.html
+- [x] **ESA Hera Mission** — Michel et al. (2022) — HAL open archive, *Planetary Science Journal*
+  - https://hal.science/hal-03733008v1/file/psj_3_7_160.pdf
+- [x] **JPL NHATS methodology and target list** — Abell et al. (2012) — NASA public domain
+  - https://ntrs.nasa.gov/api/citations/20120001818/downloads/20120001818.pdf
 
 **Scenario index** (2050 projections):
-- [ ] NASA Planetary Science Vision 2050 workshop report — NTRS (confirmed public)
-- [ ] NASA ISRU technology roadmap — NTRS
-- [ ] ESA Space Resources Strategy — ESA Open Access
-- [ ] Asteroid mining economics papers — find arXiv preprints specifically
+- [x] **NASA Planetary Science Vision 2050** — Lakew, Amato et al. (2017) — NASA public domain
+  - https://ntrs.nasa.gov/api/citations/20170008907/downloads/20170008907.pdf
+- [x] **NASA ISRU Plans** — Sanders, Kleinhenz, Linne (2022) — NASA public domain
+  - https://ntrs.nasa.gov/api/citations/20220008799/downloads/NASA%20ISRU%20Plans_Sanders_COSPAR-Final.pdf
+- [x] **ESA Space Resources Strategy** — ESA (2019) — ESA public release
+  - https://sci.esa.int/documents/34161/35992/1567260390250-ESA_Space_Resources_Strategy.pdf
+- [x] **Asteroid mining economics — two arXiv preprints:**
+  - Hein, Matheson, Fries (2018) — "A Techno-Economic Analysis of Asteroid Mining" — https://arxiv.org/pdf/1810.03836
+  - Calla, Fries, Welch (2018) — "Asteroid mining with small spacecraft and its economic feasibility" — https://arxiv.org/pdf/1808.05099
 
 **Rule**: If a document is paywalled, find an equivalent open-access source. Do not ingest anything that is not clearly free to use.
 

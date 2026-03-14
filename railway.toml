@@ -1,0 +1,17 @@
+# Railway deployment config — wired up and ready for Phase 8
+# Deployment itself does NOT happen until Phase 8.
+
+[build]
+builder = "nixpacks"
+buildCommand = "npm ci && npm run build --workspace=server"
+
+[deploy]
+startCommand = "node server/dist/server.js"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 30
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
+
+[[envVars]]
+name = "NODE_ENV"
+value = "production"

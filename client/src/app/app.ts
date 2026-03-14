@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { BottomNavComponent } from './shared/components/bottom-nav/bottom-nav.js';
+import { BottomNavComponent } from './shared/components/bottom-nav/bottom-nav';
 
 @Component({
   selector: 'app-root',

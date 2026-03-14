@@ -1,0 +1,30 @@
+#!/bin/sh
+# Asteroid Bonanza pre-commit hook
+# Runs typecheck + lint on every commit to catch errors before they reach CI.
+
+echo "▶ Running typecheck..."
+npm run typecheck --workspaces --if-present
+if [ $? -ne 0 ]; then
+  echo "✖ Typecheck failed. Commit aborted."
+  exit 1
+fi
+
+echo "▶ Running lint..."
+npm run lint --workspaces --if-present
+if [ $? -ne 0 ]; then
+  echo "✖ Lint failed. Commit aborted."
+  exit 1
+fi
+
+echo "▶ Checking for secrets with gitleaks..."
+if command -v gitleaks > /dev/null 2>&1; then
+  gitleaks protect --staged --redact
+  if [ $? -ne 0 ]; then
+    echo "✖ Gitleaks detected potential secrets. Commit aborted."
+    exit 1
+  fi
+else
+  echo "  (gitleaks not installed locally — skipping. CI will catch any secrets.)"
+fi
+
+echo "✔ All pre-commit checks passed."
