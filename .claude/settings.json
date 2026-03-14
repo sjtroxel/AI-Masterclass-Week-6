@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(.env*)",
+      "Read(*.key)",
+      "Read(*.pem)",
+      "Read(.aws/**)",
+      "Read(.ssh/**)",
+      "Write(.env*)",
+      "Write(*.key)",
+      "Write(*.pem)",
+      "Write(.aws/**)",
+      "Write(.ssh/**)",
+      "Bash(cat .env*)",
+      "Bash(echo * > .env*)"
+    ]
+  }
+}

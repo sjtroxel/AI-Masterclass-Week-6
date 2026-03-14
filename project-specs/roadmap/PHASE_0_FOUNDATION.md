@@ -10,8 +10,8 @@
 
 Complete these before writing a single line of application code.
 
-- [ ] Register NASA API key at api.nasa.gov (free — takes minutes; needed for Phase 1)
-- [ ] Register Voyage AI account and obtain API key at voyageai.com (needed for Phase 2 embeddings; register now so it's ready)
+- [x] Register NASA API key at api.nasa.gov (free — takes minutes; needed for Phase 1)
+- [x] Register Voyage AI account and obtain API key at voyageai.com (needed for Phase 2 embeddings; register now so it's ready)
 - [ ] Compile and verify RAG document source list (see RAG Document Sourcing section below; must be locked before Phase 3)
 - [ ] Confirm mobile navigation pattern: **bottom nav bar on mobile, sidebar on desktop** (decided)
 
@@ -20,14 +20,14 @@ Complete these before writing a single line of application code.
 ## Code Deliverables
 
 ### 1. Claude Code configuration (do this first)
-- [ ] `.claude/rules/typescript.md` — NodeNext `.js` import extensions, `strict: true`, no `any`, `.d.ts` for shared types
-- [ ] `.claude/rules/angular.md` — signals over RxJS, no NgRx, feature slice structure, `api.service.ts` only for HTTP, mobile template written first
-- [ ] `.claude/rules/agents.md` — agents mutate SwarmState only, confidence computed from fields never self-reported, Sonnet for orchestration Haiku for classification
-- [ ] `.claude/rules/testing.md` — explicit `.mockReset()` in every `beforeEach`, `app.ts` not `server.ts` in Supertest, `vi.stubGlobal('EventSource')` pattern, E2E at 375px and 1280px
-- [ ] `.claude/rules/database.md` — every migration has a rollback, AI fields nullable until Phase 5, no hardcoded credentials
-- [ ] `.claude/skills/phase-check.md` — reads current phase file, lists open vs. done deliverables, evaluates exit condition
-- [ ] `.claude/skills/mobile-review.md` — checks component against mobile-first spec: 375px baseline, breakpoint direction, touch targets ≥ 44px
-- [ ] `.claude/skills/agent-review.md` — checks agent against AI_ARCHITECTURE.md: output interface, uncertainty fields, no self-reported confidence, no agent-to-agent calls
+- [x] `.claude/rules/typescript.md` — NodeNext `.js` import extensions, `strict: true`, no `any`, `.d.ts` for shared types
+- [x] `.claude/rules/angular.md` — signals over RxJS, no NgRx, feature slice structure, `api.service.ts` only for HTTP, mobile template written first
+- [x] `.claude/rules/agents.md` — agents mutate SwarmState only, confidence computed from fields never self-reported, Sonnet for orchestration Haiku for classification
+- [x] `.claude/rules/testing.md` — explicit `.mockReset()` in every `beforeEach`, `app.ts` not `server.ts` in Supertest, `vi.stubGlobal('EventSource')` pattern, E2E at 375px and 1280px
+- [x] `.claude/rules/database.md` — every migration has a rollback, AI fields nullable until Phase 5, no hardcoded credentials
+- [x] `.claude/skills/phase-check.md` — reads current phase file, lists open vs. done deliverables, evaluates exit condition
+- [x] `.claude/skills/mobile-review.md` — checks component against mobile-first spec: 375px baseline, breakpoint direction, touch targets ≥ 44px
+- [x] `.claude/skills/agent-review.md` — checks agent against AI_ARCHITECTURE.md: output interface, uncertainty fields, no self-reported confidence, no agent-to-agent calls
 
 ### 2. Monorepo & scaffolds
 - [ ] Monorepo initialized with npm workspaces (`client`, `server`, `shared`, `scripts`)
@@ -38,8 +38,8 @@ Complete these before writing a single line of application code.
 - [ ] `shared/types.d.ts` with initial type stubs (`.d.ts` not `.ts` — prevents rootDir expansion)
 
 ### 3. Project config & CI
-- [ ] `CLAUDE.md` written — project overview, tech stack, dev commands, guardrails, mobile-first rule explicitly stated
-- [ ] `.claude/settings.json` deny rules (`.env*`, `*.key`, `*.pem`, `.aws/`, `.ssh/`)
+- [x] `CLAUDE.md` written — project overview, tech stack, dev commands, guardrails, mobile-first rule explicitly stated, git commit rule explicitly stated
+- [x] `.claude/settings.json` deny rules (`.env*`, `*.key`, `*.pem`, `.aws/`, `.ssh/`)
 - [ ] Husky pre-commit hooks (lint + type-check)
 - [ ] gitleaks configured (pre-commit + GitHub Actions step)
 - [ ] GitHub Actions CI — install, type-check, lint, build (no tests yet — nothing to test)
