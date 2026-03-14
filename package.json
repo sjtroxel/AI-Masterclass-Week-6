@@ -16,6 +16,8 @@
     "test": "npm run test --workspaces --if-present",
     "test:e2e": "npm run test:e2e --workspace=client",
     "build": "npm run build --workspaces --if-present",
+    "ingestNasa": "tsx --env-file=server/.env scripts/src/ingestNasa.ts",
+    "ingestDocuments": "tsx --env-file=server/.env scripts/src/ingestDocuments.ts",
     "prepare": "husky"
   },
   "devDependencies": {

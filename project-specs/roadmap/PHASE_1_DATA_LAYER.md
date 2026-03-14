@@ -2,7 +2,7 @@
 
 **Goal**: Full NASA data pipeline (raw data only), all database migrations, asteroid CRUD, and basic API endpoints.
 
-**Status**: Not started
+**Status**: In progress — ingest run pending
 
 ---
 
@@ -15,34 +15,36 @@ Raw NASA/JPL fields only in this phase. The AI-generated fields (`composition_su
 ## Deliverables
 
 ### Database
-- [ ] All migrations written and tested — every migration has a paired rollback script
-- [ ] Supabase RPC functions: `match_asteroids`, `match_science_chunks`, `match_scenario_chunks`
+- [x] All migrations written and tested — every migration has a paired rollback script
+- [x] Supabase RPC functions: `match_science_chunks`, `match_scenario_chunks` applied to Supabase
+- [ ] `match_asteroids` RPC — **deferred to Phase 5** (asteroid embeddings are null until then)
 
 ### NASA API Services (`server/src/services/nasaApi/`)
-- [ ] `ExternalAPIService` base class — retry logic, rate limiting, error handling
-- [ ] `NeoWsService` — NEO catalog, close approaches
-- [ ] `SBDBService` — spectral types, orbital elements, physical parameters
-- [ ] `NHATSService` — human-accessible targets, delta-V budgets
-- [ ] `CADService` — close approach data
+- [x] `ExternalAPIService` base class — retry logic, exponential backoff, error handling
+- [x] `NeoWsService` — NEO catalog browse + single-object detail
+- [x] `SBDBService` — spectral types, diameter, MOID
+- [x] `NHATSService` — human-accessible targets, delta-V budgets
+- [x] `CADService` — close approach data, date normalization
 
 ### Ingestion Script
-- [ ] `scripts/ingestNasa.ts` — pulls full NEO catalog from NASA → transforms → upserts to Supabase
-- [ ] **Full bulk ingest run**: all ~35,000 known NEOs using registered API key (1,000 req/hour, ~2 hour run). AI-generated fields left null.
+- [x] `scripts/ingestNasa.ts` — pulls full NEO catalog from NASA → transforms → upserts to Supabase
+- [ ] **Full bulk ingest run**: all ~35,000 known NEOs using registered API key (1,000 req/hour, ~2 hour run). AI-generated fields left null. Run via: `npm run ingestNasa`
 
 ### Server Services
-- [ ] `asteroidService.ts` — CRUD operations on the `asteroids` table
+- [x] `asteroidService.ts` — paginated list with filters, get by UUID, get by nasa_id
 
 ### API Endpoints
-- [ ] `GET /api/health` — basic health check
-- [ ] `GET /api/asteroids` — paginated, filterable list
-- [ ] `GET /api/asteroids/:id` — single asteroid detail
+- [x] `GET /api/health` — basic health check
+- [x] `GET /api/asteroids` — paginated list, filterable by `is_pha`, `nhats_accessible`, `spectral_type`
+- [x] `GET /api/asteroids/:id` — single asteroid detail (accepts UUID or nasa_id)
 
 ### Tests
-- [ ] Unit tests for all services (Supabase, Claude, NASA APIs mocked)
-- [ ] Integration tests for all three endpoints via Supertest
+- [x] Unit tests for all NASA API services and asteroidService (fetch + Supabase mocked)
+- [x] Integration tests for all three endpoints via Supertest — 26 tests, all passing
 
 **Exit condition**: All three endpoints return real data from the Supabase database. `ingestNasa.ts` has completed the full bulk ingest. Server test coverage ≥ 90%.
 
 ---
 
 *Phase document created: 2026-03-13*
+*Last updated: 2026-03-14 — all code complete; bulk ingest run pending*
