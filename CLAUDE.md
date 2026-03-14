@@ -159,9 +159,9 @@ The AI Analyst is architecturally constrained to these indices. It cannot use mo
 
 | Phase | Name | Status |
 |---|---|---|
-| 0 | Foundation | In progress |
-| 1 | Data Layer | Not started |
-| 2 | Search & Browse | Not started |
+| 0 | Foundation | Complete ✓ |
+| 1 | Data Layer | Complete ✓ |
+| 2 | Search & Browse | Complete ✓ |
 | 3 | RAG Knowledge Base | Not started |
 | 4 | AI Analyst | Not started |
 | 5 | Agent Swarm | Not started |
@@ -170,7 +170,7 @@ The AI Analyst is architecturally constrained to these indices. It cannot use mo
 | 8 | Hardening & Deployment | Not started |
 
 Full roadmap: `project-specs/ROADMAP.md`
-Current phase details: `project-specs/roadmap/PHASE_0_FOUNDATION.md`
+Current phase details: `project-specs/roadmap/PHASE_3_RAG_KNOWLEDGE_BASE.md`
 
 ---
 
@@ -191,4 +191,4 @@ Current phase details: `project-specs/roadmap/PHASE_0_FOUNDATION.md`
 - Three.js orbital viz is Phase 6 scope, not earlier
 - Apophis 2029 is a hand-crafted featured case study in Phase 7
 
-*Last updated: 2026-03-13 — Phase 0 in progress*
+*Last updated: 2026-03-14 — Phase 2 complete; Phase 3 is next*

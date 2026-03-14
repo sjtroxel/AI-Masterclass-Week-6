@@ -2,7 +2,7 @@
 
 **Goal**: Full NASA data pipeline (raw data only), all database migrations, asteroid CRUD, and basic API endpoints.
 
-**Status**: In progress — ingest run pending
+**Status**: Complete ✓
 
 ---
 
@@ -28,7 +28,7 @@ Raw NASA/JPL fields only in this phase. The AI-generated fields (`composition_su
 
 ### Ingestion Script
 - [x] `scripts/ingestNasa.ts` — pulls full NEO catalog from NASA → transforms → upserts to Supabase
-- [ ] **Full bulk ingest run**: all ~35,000 known NEOs using registered API key (1,000 req/hour, ~2 hour run). AI-generated fields left null. Run via: `npm run ingestNasa`
+- [x] **Full bulk ingest run**: all ~35,000 known NEOs using registered API key (1,000 req/hour, ~2 hour run). AI-generated fields left null. Run via: `npm run ingestNasa`
 
 ### Server Services
 - [x] `asteroidService.ts` — paginated list with filters, get by UUID, get by nasa_id
@@ -47,4 +47,4 @@ Raw NASA/JPL fields only in this phase. The AI-generated fields (`composition_su
 ---
 
 *Phase document created: 2026-03-13*
-*Last updated: 2026-03-14 — all code complete; bulk ingest run pending*
+*Last updated: 2026-03-14 — full bulk ingest complete; all deliverables done*

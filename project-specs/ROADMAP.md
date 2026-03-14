@@ -9,8 +9,8 @@
 | Phase | Name | Status |
 |---|---|---|
 | 0 | [Foundation](roadmap/PHASE_0_FOUNDATION.md) | **Complete** ✓ |
-| 1 | [Data Layer](roadmap/PHASE_1_DATA_LAYER.md) | **In progress** — ingest run pending |
-| 2 | [Search & Browse](roadmap/PHASE_2_SEARCH_BROWSE.md) | Not started |
+| 1 | [Data Layer](roadmap/PHASE_1_DATA_LAYER.md) | **Complete** ✓ |
+| 2 | [Search & Browse](roadmap/PHASE_2_SEARCH_BROWSE.md) | **Complete** ✓ |
 | 3 | [RAG Knowledge Base](roadmap/PHASE_3_RAG_KNOWLEDGE_BASE.md) | Not started |
 | 4 | [The Analyst](roadmap/PHASE_4_ANALYST.md) | Not started |
 | 5 | [The Agent Swarm](roadmap/PHASE_5_AGENT_SWARM.md) | Not started |

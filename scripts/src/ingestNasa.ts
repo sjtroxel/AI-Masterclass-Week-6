@@ -103,8 +103,8 @@ function transform(
     is_pha: neo.is_potentially_hazardous_asteroid,
     is_sentry_object: neo.is_sentry_object,
     absolute_magnitude_h: neo.absolute_magnitude_h,
-    diameter_min_km: neo.estimated_diameter.kilometers.estimated_diameter_min,
-    diameter_max_km: neo.estimated_diameter.kilometers.estimated_diameter_max,
+    diameter_min_km: neo.estimated_diameter?.kilometers?.estimated_diameter_min ?? null,
+    diameter_max_km: neo.estimated_diameter?.kilometers?.estimated_diameter_max ?? null,
 
     // Orbital elements — present on detail view, may be absent on browse
     orbit_epoch_jd:           orb ? parseFloat(orb.epoch_osculation) : null,

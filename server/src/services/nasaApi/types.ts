@@ -26,8 +26,8 @@ export interface NeoWsObject {
   absolute_magnitude_h: number;
   is_potentially_hazardous_asteroid: boolean;
   is_sentry_object: boolean;
-  estimated_diameter: {
-    kilometers: {
+  estimated_diameter?: {
+    kilometers?: {
       estimated_diameter_min: number;
       estimated_diameter_max: number;
     };

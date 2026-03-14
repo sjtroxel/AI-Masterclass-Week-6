@@ -6,8 +6,35 @@ import {
   getAsteroidByNasaId,
   type AsteroidFilters,
 } from '../services/asteroidService.js';
+import { searchAsteroids } from '../services/searchService.js';
+import { ValidationError } from '../errors/AppError.js';
 
 const router = Router();
+
+// GET /api/asteroids/search?q=&count=&threshold=
+// Semantic search via Voyage AI embeddings + pgvector.
+// Must be registered before /:id so Express doesn't treat "search" as an id.
+router.get('/search', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const q = req.query['q'];
+    if (typeof q !== 'string' || q.trim().length === 0) {
+      throw new ValidationError('Query parameter "q" is required and cannot be empty');
+    }
+
+    const count = req.query['count']
+      ? Math.min(100, Math.max(1, parseInt(String(req.query['count']), 10)))
+      : 20;
+
+    const threshold = req.query['threshold']
+      ? parseFloat(String(req.query['threshold']))
+      : 0.3;
+
+    const result = await searchAsteroids(q.trim(), count, threshold);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
 
 // GET /api/asteroids
 // Query params: page, per_page, is_pha, nhats_accessible, spectral_type

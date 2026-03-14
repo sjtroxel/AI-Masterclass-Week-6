@@ -1,34 +1,66 @@
 @import "tailwindcss";
 
 @theme {
-  /* Color palette — space-dark aesthetic */
+  /* ── Color palette — space-dark aesthetic ───────────────────────────── */
+
+  /* Void: near-blacks for backgrounds */
   --color-space-950: #030712;
   --color-space-900: #0a0f1e;
   --color-space-800: #0d1b2a;
   --color-space-700: #1a2744;
   --color-space-600: #243358;
+  --color-space-500: #2e4070;
+  --color-space-400: #3d5490;
+  --color-space-300: #6b7fa8;
 
+  /* Nebula: indigo/violet for primary interactive elements */
   --color-nebula-400: #818cf8;
   --color-nebula-500: #6366f1;
   --color-nebula-600: #4f46e5;
 
+  /* Stellar: amber/gold for highlights and featured content */
+  --color-stellar-400: #fbbf24;
+  --color-stellar-500: #f59e0b;
+  --color-stellar-600: #d97706;
+
+  /* Asteroid: orange for asteroid-specific accents */
   --color-asteroid-400: #fb923c;
   --color-asteroid-500: #f97316;
   --color-asteroid-600: #ea580c;
 
+  /* Ion: cyan/blue for data readouts */
+  --color-ion-400: #38bdf8;
+  --color-ion-500: #0ea5e9;
+  --color-ion-600: #0284c7;
+
+  /* Plasma: teal for secondary accents */
+  --color-plasma-400: #2dd4bf;
+  --color-plasma-500: #14b8a6;
+
+  /* Status: hazard/safe */
   --color-hazard-400: #f87171;
   --color-hazard-500: #ef4444;
+  --color-hazard-600: #dc2626;
 
   --color-safe-400: #4ade80;
   --color-safe-500: #22c55e;
+  --color-safe-600: #16a34a;
 
+  /* Data (legacy alias kept for backward compat) */
   --color-data-400: #38bdf8;
   --color-data-500: #0ea5e9;
 
-  /* Typography */
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  /* ── Typography ─────────────────────────────────────────────────────── */
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
-  /* Minimum touch target size */
+  /* ── Spacing ────────────────────────────────────────────────────────── */
+
+  /* Minimum touch target */
   --spacing-touch: 44px;
+}
+
+/* Safe-area padding for bottom nav on notched devices */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
