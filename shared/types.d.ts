@@ -55,97 +55,199 @@ export interface CloseApproach {
   orbiting_body: string;
 }
 
-// ── Confidence scoring ────────────────────────────────────────────────────────
+// ── Mission parameters (user inputs to the swarm) ─────────────────────────────
 
-export interface ConfidenceScore {
-  orbital: number;       // 0–1: confidence in orbital accessibility data
-  composition: number;   // 0–1: confidence in spectral/composition data
-  economics: number;     // 0–1: confidence in economic value estimates
-  risk: number;          // 0–1: confidence in risk assessment
-  aggregate: number;     // 0–1: weighted mean
+export interface MissionParams {
+  maxDeltaV_kms?: number;       // Max acceptable delta-V budget (km/s)
+  missionWindowStart?: string;  // ISO date — earliest acceptable launch
+  missionWindowEnd?: string;    // ISO date — latest acceptable launch
+  missionType?: 'flyby' | 'rendezvous' | 'sample_return' | 'mining';
+}
+
+// ── Agent types ───────────────────────────────────────────────────────────────
+
+export type AgentType = 'navigator' | 'geologist' | 'economist' | 'riskAssessor';
+
+// ── Swarm phase state machine ─────────────────────────────────────────────────
+
+export type SwarmPhase =
+  | 'idle'
+  | 'navigating'
+  | 'geologizing'
+  | 'economizing'
+  | 'risk_assessing'
+  | 'synthesizing'
+  | 'complete'
+  | 'handoff'
+  | 'error';
+
+// ── Confidence scoring ────────────────────────────────────────────────────────
+// Computed by the Orchestrator from observable fields — never self-reported by agents.
+
+export interface ConfidenceScores {
+  orbital: number;          // 0–1: Navigator's certainty about accessibility data
+  compositional: number;    // 0–1: Geologist's certainty about mineral content
+  economic: number;         // 0–1: Economist's certainty about value model
+  risk: number;             // 0–1: Risk Assessor's certainty about hazard assessment
+  overall: number;          // Weighted average — compared against HANDOFF_THRESHOLD
+}
+
+// ── Agent output primitives ───────────────────────────────────────────────────
+
+export interface NumberRange {
+  min: number;
+  max: number;
+}
+
+export interface LaunchWindow {
+  date: string;         // ISO date of launch opportunity
+  deltaV_kms: number;
+  missionDurationDays: number;
+  notes?: string;
+}
+
+export interface ResourceHighlight {
+  resource: string;     // e.g. "water ice", "platinum-group metals"
+  significance: string; // Why this is notable for this specific asteroid
+}
+
+export interface ValueDriver {
+  driver: string;
+  impact: 'high' | 'moderate' | 'low';
+  description: string;
+}
+
+export interface EconomicRisk {
+  risk: string;
+  severity: 'critical' | 'significant' | 'moderate' | 'minor';
+  description: string;
+}
+
+export interface MissionRisk {
+  risk: string;
+  severity: 'critical' | 'high' | 'moderate' | 'low';
+  mitigation?: string;
+}
+
+export interface AgentError {
+  agent: AgentType;
+  message: string;
+  code: string;
+  recoverable: boolean;
+}
+
+// ── Navigator Agent output ────────────────────────────────────────────────────
+
+export interface NavigatorOutput {
+  accessibilityRating: 'exceptional' | 'good' | 'marginal' | 'inaccessible';
+  minDeltaV_kms: number | null;
+  bestLaunchWindows: LaunchWindow[];
+  missionDurationDays: number | null;
+  orbitalClass: string;
+  dataCompleteness: number;       // 0–1: how much NHATS/approach data was available
+  assumptionsRequired: string[];  // What the agent had to assume due to missing data
+  reasoning: string;              // Plain-language explanation for the user
+  sources: string[];              // source_id strings from RAG chunks used
+}
+
+// ── Geologist Agent output ────────────────────────────────────────────────────
+
+export interface GeologistOutput {
+  spectralClass: string;
+  compositionEstimate: {
+    water_ice_pct: NumberRange;
+    carbonaceous_pct: NumberRange;
+    silicate_pct: NumberRange;
+    iron_nickel_pct: NumberRange;
+    platinum_group_pct: NumberRange;
+    other_pct: NumberRange;
+  };
+  keyResources: ResourceHighlight[];
+  compositionConfidence: 'well_characterized' | 'estimated' | 'uncertain' | 'unknown';
+  analogAsteroids: string[];      // Real asteroids with similar profiles
+  dataCompleteness: number;
+  assumptionsRequired: string[];
+  reasoning: string;
+  sources: string[];
+}
+
+// ── Economist Agent output ────────────────────────────────────────────────────
+
+export interface EconomistOutput {
+  totalResourceValueUSD: NumberRange;
+  terrestrialExportValue: NumberRange;
+  inSpaceUtilizationValue: NumberRange;
+  missionROI: 'exceptional' | 'positive' | 'marginal' | 'negative' | 'unmodelable';
+  keyValueDrivers: ValueDriver[];
+  keyRisks: EconomicRisk[];
+  scenarioAssumptions: string[];
+  dataCompleteness: number;
+  assumptionsRequired: string[];
+  reasoning: string;
+  disclaimer: string;            // Always present: "These are 2050 projections..."
+  sources: string[];
+}
+
+// ── Risk Assessor Agent output ────────────────────────────────────────────────
+
+export interface RiskOutput {
+  planetaryDefense: {
+    isPHA: boolean;
+    hazardRating: 'none' | 'negligible' | 'low' | 'moderate' | 'elevated' | 'high';
+    monitoringStatus: string;
+    notableApproaches: CloseApproach[];
+    mitigationContext: string;
+  };
+  missionRisk: {
+    overallRating: 'low' | 'moderate' | 'high' | 'extreme';
+    communicationDelayMinutes: NumberRange;
+    surfaceConditions: string;
+    primaryRisks: MissionRisk[];
+  };
+  dataCompleteness: number;
+  assumptionsRequired: string[];
+  reasoning: string;
+  sources: string[];
+}
+
+// ── Handoff packet ────────────────────────────────────────────────────────────
+
+export interface HandoffPacket {
+  triggeredBy: 'low_confidence' | 'data_gap' | 'agent_failure';
+  aggregateConfidence: number;
+  whatWasFound: string;
+  confidenceBreakdown: ConfidenceScores;
+  whereConfidenceBrokDown: string;
+  whatHumanExpertNeeds: string;
+  generatedAt: string;        // ISO datetime
 }
 
 // ── SwarmState ────────────────────────────────────────────────────────────────
 // Agents communicate only through this shared state object.
-// Each agent writes to its designated slice only.
+// Each agent writes to its designated output field only.
+// The Orchestrator reads all fields and writes synthesis/handoff.
 
 export interface SwarmState {
-  asteroid_id: string;
-  orbital: OrbitalAnalysis | null;
-  composition: CompositionAnalysis | null;
-  economics: EconomicsAnalysis | null;
-  risk: RiskAnalysis | null;
-  synthesis: SwarmSynthesis | null;
-  handoff: HandoffPackage | null;
-}
+  // Input
+  asteroidId: string;
+  missionParams: MissionParams;
+  requestedAgents: AgentType[];
 
-// ── Agent output interfaces ───────────────────────────────────────────────────
+  // Agent outputs (undefined until that agent has run)
+  navigatorOutput?: NavigatorOutput;
+  geologistOutput?: GeologistOutput;
+  economistOutput?: EconomistOutput;
+  riskOutput?: RiskOutput;
 
-export type AgentStatus = 'success' | 'partial' | 'failed';
+  // Orchestration control
+  phase: SwarmPhase;
+  errors: AgentError[];
 
-export interface OrbitalAnalysis {
-  status: AgentStatus;
-  confidence: Pick<ConfidenceScore, 'orbital'>;
-  sources: string[];
-  delta_v_km_s: number | null;
-  synodic_period_days: number | null;
-  next_launch_window: string | null; // ISO date string
-  mission_duration_days: number | null;
-  accessibility_tier: 'easy' | 'moderate' | 'difficult' | 'very_difficult' | null;
-  summary: string;
-}
-
-export interface CompositionAnalysis {
-  status: AgentStatus;
-  confidence: Pick<ConfidenceScore, 'composition'>;
-  sources: string[];
-  spectral_class: string | null;
-  inferred_composition: string[];
-  water_ice_probability: number | null; // 0–1
-  metal_content_estimate: 'high' | 'moderate' | 'low' | 'unknown';
-  summary: string;
-}
-
-export interface EconomicsAnalysis {
-  status: AgentStatus;
-  confidence: Pick<ConfidenceScore, 'economics'>;
-  sources: string[];
-  estimated_value_usd_low: number | null;
-  estimated_value_usd_high: number | null;
-  primary_resources: string[];
-  viability_2050: 'high' | 'moderate' | 'low' | 'insufficient_data';
-  summary: string;
-}
-
-export interface RiskAnalysis {
-  status: AgentStatus;
-  confidence: Pick<ConfidenceScore, 'risk'>;
-  sources: string[];
-  // Planetary defense
-  torino_scale: number | null;       // 0–10
-  palermo_scale: number | null;      // log scale
-  impact_probability: number | null; // 0–1
-  // Mission risk
-  mission_risk_tier: 'low' | 'moderate' | 'high' | 'very_high' | null;
-  summary: string;
-}
-
-export interface SwarmSynthesis {
-  confidence: ConfidenceScore;
-  recommendation: string;
-  key_findings: string[];
-  caveats: string[];
-  generated_at: string; // ISO datetime
-}
-
-export interface HandoffPackage {
-  triggered_by: 'low_confidence' | 'data_gap' | 'agent_failure';
-  aggregate_confidence: number;
-  what_was_found: string;
-  confidence_breakdown: ConfidenceScore;
-  where_confidence_broke_down: string;
-  what_human_expert_needs: string;
-  generated_at: string;
+  // Final outputs
+  synthesis?: string;
+  confidenceScores?: ConfidenceScores;
+  handoffTriggered: boolean;
+  handoffPacket?: HandoffPacket;
 }
 
 // ── RAG ───────────────────────────────────────────────────────────────────────
@@ -189,4 +291,24 @@ export interface PaginatedResponse<T> {
   total: number;
   page: number;
   per_page: number;
+}
+
+// ── Analysis persistence (analyses table) ─────────────────────────────────────
+
+export type AnalysisStatus = 'pending' | 'running' | 'complete' | 'handoff' | 'error';
+
+export interface Analysis {
+  id: string;
+  asteroid_id: string;
+  status: AnalysisStatus;
+  phase: SwarmPhase;
+  navigator_output: NavigatorOutput | null;
+  geologist_output: GeologistOutput | null;
+  economist_output: EconomistOutput | null;
+  risk_output: RiskOutput | null;
+  confidence_scores: ConfidenceScores | null;
+  synthesis: string | null;
+  handoff_packet: HandoffPacket | null;
+  created_at: string;
+  updated_at: string;
 }

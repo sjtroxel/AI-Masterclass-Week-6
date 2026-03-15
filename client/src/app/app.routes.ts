@@ -21,11 +21,16 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/dossier/dossier.component').then((m) => m.DossierComponent),
   },
-  // Phase 5+ routes — placeholder components until those phases ship
+  // Phase 5 — Agent Swarm Analysis
+  {
+    path: 'analysis/:id',
+    loadComponent: () =>
+      import('./features/analysis/analysis.component').then((m) => m.AnalysisComponent),
+  },
   {
     path: 'analysis',
-    loadComponent: () =>
-      import('./features/search/search.component').then((m) => m.SearchComponent),
+    redirectTo: '/search',
+    pathMatch: 'full',
   },
   {
     path: 'analyst',

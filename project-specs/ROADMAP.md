@@ -11,9 +11,9 @@
 | 0 | [Foundation](roadmap/PHASE_0_FOUNDATION.md) | **Complete** ✓ |
 | 1 | [Data Layer](roadmap/PHASE_1_DATA_LAYER.md) | **Complete** ✓ |
 | 2 | [Search & Browse](roadmap/PHASE_2_SEARCH_BROWSE.md) | **Complete** ✓ |
-| 3 | [RAG Knowledge Base](roadmap/PHASE_3_RAG_KNOWLEDGE_BASE.md) | In progress |
-| 4 | [The Analyst](roadmap/PHASE_4_ANALYST.md) | Not started |
-| 5 | [The Agent Swarm](roadmap/PHASE_5_AGENT_SWARM.md) | Not started |
+| 3 | [RAG Knowledge Base](roadmap/PHASE_3_RAG_KNOWLEDGE_BASE.md) | **Complete** ✓ |
+| 4 | [The Analyst](roadmap/PHASE_4_ANALYST.md) | **Complete** ✓ |
+| 5 | [The Agent Swarm](roadmap/PHASE_5_AGENT_SWARM.md) | **In progress** — core swarm built; tests + backfill remain |
 | 6 | [Mission Planning & Orbital Visualization](roadmap/PHASE_6_MISSION_PLANNING.md) | Not started |
 | 7 | [Planetary Defense Watch](roadmap/PHASE_7_PLANETARY_DEFENSE.md) | Not started |
 | 8 | [Hardening, Polish & Production](roadmap/PHASE_8_HARDENING.md) | Not started |
@@ -46,4 +46,4 @@
 
 ---
 
-*Document created: 2026-03-13*
+*Document created: 2026-03-13 — last updated: 2026-03-15 (Phase 5 core complete)*

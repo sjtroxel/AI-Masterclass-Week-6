@@ -203,18 +203,22 @@ import { ApiService, type AsteroidDetail } from '../../core/api.service';
                   {{ asteroid()!.composition_summary }}
                 </p>
               } @else {
-                <div class="flex items-center gap-3 py-4">
-                  <div class="w-8 h-8 rounded-full bg-space-800 flex items-center justify-center shrink-0">
-                    <svg class="w-4 h-4 text-space-500" viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
-                         aria-hidden="true">
-                      <path d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                    </svg>
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-3 py-2">
+                    <div class="w-8 h-8 rounded-full bg-space-800 flex items-center justify-center shrink-0">
+                      <svg class="w-4 h-4 text-space-500" viewBox="0 0 24 24" fill="none"
+                           stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                           aria-hidden="true">
+                        <path d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
+                      </svg>
+                    </div>
+                    <p class="text-sm font-medium text-space-300">Run agent analysis</p>
                   </div>
-                  <div>
-                    <p class="text-sm font-medium text-space-300">Pending analysis</p>
-                    <p class="text-xs text-space-500 mt-0.5">Available in Phase 5 after agent swarm runs</p>
-                  </div>
+                  <a [routerLink]="['/analysis', id()]"
+                     class="text-xs text-nebula-400 hover:text-nebula-300 transition-colors
+                            min-h-[44px] flex items-center px-2">
+                    Analyze →
+                  </a>
                 </div>
               }
             </section>
@@ -234,18 +238,22 @@ import { ApiService, type AsteroidDetail } from '../../core/api.service';
                   asteroid()!.resource_profile | json
                 }}</pre>
               } @else {
-                <div class="flex items-center gap-3 py-4">
-                  <div class="w-8 h-8 rounded-full bg-space-800 flex items-center justify-center shrink-0">
-                    <svg class="w-4 h-4 text-space-500" viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
-                         aria-hidden="true">
-                      <path d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                    </svg>
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-3 py-2">
+                    <div class="w-8 h-8 rounded-full bg-space-800 flex items-center justify-center shrink-0">
+                      <svg class="w-4 h-4 text-space-500" viewBox="0 0 24 24" fill="none"
+                           stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                           aria-hidden="true">
+                        <path d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
+                      </svg>
+                    </div>
+                    <p class="text-sm font-medium text-space-300">Run agent analysis</p>
                   </div>
-                  <div>
-                    <p class="text-sm font-medium text-space-300">Pending analysis</p>
-                    <p class="text-xs text-space-500 mt-0.5">Available in Phase 5 after agent swarm runs</p>
-                  </div>
+                  <a [routerLink]="['/analysis', id()]"
+                     class="text-xs text-stellar-400 hover:text-stellar-300 transition-colors
+                            min-h-[44px] flex items-center px-2">
+                    Analyze →
+                  </a>
                 </div>
               }
             </section>

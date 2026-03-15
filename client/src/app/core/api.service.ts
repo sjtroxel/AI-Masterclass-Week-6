@@ -73,6 +73,122 @@ export interface AsteroidFilters {
   spectral_type?: string;
 }
 
+// ── Analysis types ─────────────────────────────────────────────────────────────
+
+export interface ConfidenceScores {
+  orbital: number;
+  compositional: number;
+  economic: number;
+  risk: number;
+  overall: number;
+}
+
+export interface NumberRange { min: number; max: number; }
+
+export interface NavigatorOutput {
+  accessibilityRating: 'exceptional' | 'good' | 'marginal' | 'inaccessible';
+  minDeltaV_kms: number | null;
+  bestLaunchWindows: { date: string; deltaV_kms: number; missionDurationDays: number; notes?: string }[];
+  missionDurationDays: number | null;
+  orbitalClass: string;
+  dataCompleteness: number;
+  assumptionsRequired: string[];
+  reasoning: string;
+  sources: string[];
+}
+
+export interface GeologistOutput {
+  spectralClass: string;
+  compositionEstimate: {
+    water_ice_pct: NumberRange;
+    carbonaceous_pct: NumberRange;
+    silicate_pct: NumberRange;
+    iron_nickel_pct: NumberRange;
+    platinum_group_pct: NumberRange;
+    other_pct: NumberRange;
+  };
+  keyResources: { resource: string; significance: string }[];
+  compositionConfidence: 'well_characterized' | 'estimated' | 'uncertain' | 'unknown';
+  analogAsteroids: string[];
+  dataCompleteness: number;
+  assumptionsRequired: string[];
+  reasoning: string;
+  sources: string[];
+}
+
+export interface EconomistOutput {
+  totalResourceValueUSD: NumberRange;
+  terrestrialExportValue: NumberRange;
+  inSpaceUtilizationValue: NumberRange;
+  missionROI: 'exceptional' | 'positive' | 'marginal' | 'negative' | 'unmodelable';
+  keyValueDrivers: { driver: string; impact: 'high' | 'moderate' | 'low'; description: string }[];
+  keyRisks: { risk: string; severity: string; description: string }[];
+  scenarioAssumptions: string[];
+  dataCompleteness: number;
+  assumptionsRequired: string[];
+  reasoning: string;
+  disclaimer: string;
+  sources: string[];
+}
+
+export interface RiskOutput {
+  planetaryDefense: {
+    isPHA: boolean;
+    hazardRating: 'none' | 'negligible' | 'low' | 'moderate' | 'elevated' | 'high';
+    monitoringStatus: string;
+    notableApproaches: { close_approach_date: string; miss_distance_km: number; orbiting_body: string }[];
+    mitigationContext: string;
+  };
+  missionRisk: {
+    overallRating: 'low' | 'moderate' | 'high' | 'extreme';
+    communicationDelayMinutes: NumberRange;
+    surfaceConditions: string;
+    primaryRisks: { risk: string; severity: string; mitigation?: string }[];
+  };
+  dataCompleteness: number;
+  assumptionsRequired: string[];
+  reasoning: string;
+  sources: string[];
+}
+
+export interface AgentEvent {
+  type: 'input' | 'tool_call' | 'tool_result' | 'rag_lookup' | 'output' | 'error';
+  agent: string;
+  timestamp: string;
+  [key: string]: unknown;
+}
+
+export interface AnalysisResponse {
+  analysisId: string;
+  asteroidId: string;
+  status: 'pending' | 'running' | 'complete' | 'handoff' | 'error';
+  phase: string;
+  handoffTriggered: boolean;
+  confidenceScores: ConfidenceScores | null;
+  synthesis: string | null;
+  handoffPacket: {
+    triggeredBy: string;
+    aggregateConfidence: number;
+    whatWasFound: string;
+    confidenceBreakdown: ConfidenceScores;
+    whereConfidenceBrokDown: string;
+    whatHumanExpertNeeds: string;
+  } | null;
+  outputs: {
+    navigator: NavigatorOutput | null;
+    geologist: GeologistOutput | null;
+    economist: EconomistOutput | null;
+    risk: RiskOutput | null;
+  };
+  trace: {
+    totalLatencyMs: number;
+    agentLatencies: Record<string, number | null>;
+    confidenceInputs: Record<string, { dataCompleteness: number; assumptionsCount: number; agentSucceeded: boolean }>;
+    agentEvents: Record<string, AgentEvent[]>;
+  };
+  errors: { agent: string; message: string; code: string }[];
+}
+
 // ── Service ───────────────────────────────────────────────────────────────────
 
 @Injectable({ providedIn: 'root' })
@@ -121,5 +237,19 @@ export class ApiService {
 
   getAsteroid(id: string): Observable<AsteroidDetail> {
     return this.http.get<AsteroidDetail>(`${this.base}/asteroids/${id}`);
+  }
+
+  triggerAnalysis(
+    asteroidId: string,
+    missionParams: Record<string, unknown> = {},
+  ): Observable<AnalysisResponse> {
+    return this.http.post<AnalysisResponse>(
+      `${this.base}/analysis/${asteroidId}`,
+      { missionParams },
+    );
+  }
+
+  getLatestAnalysis(asteroidId: string): Observable<AnalysisResponse> {
+    return this.http.get<AnalysisResponse>(`${this.base}/analysis/${asteroidId}/latest`);
   }
 }
