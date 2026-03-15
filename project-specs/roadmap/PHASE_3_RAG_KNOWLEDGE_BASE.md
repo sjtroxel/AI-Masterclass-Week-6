@@ -2,7 +2,7 @@
 
 **Goal**: Dual-index knowledge base ingested and retrieval quality verified. No frontend changes.
 
-**Status**: Not started
+**Status**: In progress
 
 **Prerequisite**: RAG document source list compiled and verified during Phase 0. Do not begin this phase without the verified list in hand.
 
@@ -11,14 +11,14 @@
 ## Deliverables
 
 ### Ingestion Pipeline
-- [ ] `scripts/ingestDocuments.ts` — PDF → text extraction → chunking → Voyage AI embedding → Supabase
-- [ ] Document-structure chunking implemented (respects H1/H2/H3 hierarchy, heading attached to content)
-- [ ] Semantic chunking for academic papers (paragraph-level, 50-token overlap, max 512 tokens/chunk)
+- [x] `scripts/ingestDocuments.ts` — PDF → text extraction → chunking → Voyage AI embedding → Supabase
+- [x] Document-structure chunking implemented (respects H1/H2/H3 hierarchy, heading attached to content)
+- [x] Semantic chunking for academic papers (paragraph-level, 50-token overlap, max 512 tokens/chunk)
 
 ### Data Ingestion
-- [ ] Science index (`science_chunks`) populated — all documents from Phase 0 verified list
-- [ ] Scenario index (`scenario_chunks`) populated — all 2050 projection documents from Phase 0 verified list
-- [ ] Each chunk tagged with `source_type` and `source_title`
+- [x] Science index (`science_chunks`) populated — 216 rows across 6 documents
+- [x] Scenario index (`scenario_chunks`) populated — 128 rows across 5 documents
+- [x] Each chunk tagged with `source_id`, `source_title`, `source_url`, `source_year`
 
 ### Backend Service
 - [ ] `ragService.ts` — retrieval from both indices with source-type labeling
@@ -35,4 +35,23 @@
 
 ---
 
-*Phase document created: 2026-03-13*
+## Notes
+
+### Document source changes (2026-03-15)
+The original Psyche paper (Polanskey et al. 2025, Space Science Reviews via PMC) was blocked by Cloudflare and could not be downloaded programmatically. Replaced with two open-access arXiv papers:
+- Elkins-Tanton et al. (2022) Psyche mission overview — `arxiv.org/pdf/2108.07402`
+- Rivkin et al. (2021) DART mission overview — `arxiv.org/pdf/2110.11414`
+
+### Supabase storage crisis (2026-03-15)
+The asteroids table (42,552 rows with 1024-dim embeddings) pushed the free tier over the 0.5 GB limit, triggering read-only mode. Resolution:
+- Trimmed asteroids to PHAs + NHATS + Sentry objects only (~10,796 rows)
+- Ran `VACUUM FULL asteroids` via psql session pooler connection to reclaim disk space
+- Actual database size after cleanup: 0.18 GB (well under limit)
+- Supabase total storage gauge shows ~0.61 GB — includes WAL files from tonight's heavy write activity; expected to decrease as WAL recycles, but timeline unknown
+
+### pdf-parse v2 API
+`pdf-parse` v2 exports a named class `PDFParse`, not a default function. Correct import: `import { PDFParse } from 'pdf-parse'`. Usage: `new PDFParse({ data: buffer })` → `await parser.getText()` → `.text`.
+
+---
+
+*Phase document created: 2026-03-13 | Last updated: 2026-03-15*

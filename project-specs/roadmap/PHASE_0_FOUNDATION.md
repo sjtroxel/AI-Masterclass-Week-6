@@ -69,8 +69,12 @@ Compile and verify this list before Phase 3 begins. For each document confirm: (
 - [x] **OSIRIS-REx Bennu sample mineralogy** — Hamilton et al. (2024) — NASA public domain
   - https://ntrs.nasa.gov/api/citations/20240000430/downloads/Hamilton-SSAWG_LPSC55_20240103_1366.pdf
   - Note: The Lauretta et al. (2024) definitive paper in *Meteoritics & Planetary Science* (DOI 10.1111/maps.14227) may be paywalled; use the NTRS PDF above as primary source.
-- [x] **Psyche Mission Description and Design Rationale** — Polanskey, Elkins-Tanton et al. (2025) — CC BY-NC-ND 4.0
-  - https://pmc.ncbi.nlm.nih.gov/articles/PMC12521304/pdf/11214_2025_Article_1218.pdf
+- [x] **Psyche Mission Overview** — Elkins-Tanton et al. (2022) — arXiv open access
+  - https://arxiv.org/pdf/2108.07402
+  - Note: 2025 Polanskey et al. paper (Space Science Reviews) blocked by Cloudflare; replaced with this open-access arXiv preprint
+- [x] **DART Mission Overview** — Rivkin et al. (2021) — arXiv open access
+  - https://arxiv.org/pdf/2110.11414
+  - Added: planetary defense relevance; complements ESA Hera entry
 - [x] **Bus-DeMeo asteroid spectral taxonomy** — DeMeo, Binzel, Slivan, Bus (2009) — HAL open archive (no arXiv preprint exists)
   - https://hal.science/hal-00545286v1/file/PEER_stage2_10.1016%252Fj.icarus.2009.02.005.pdf
   - Companion dataset: https://sbn.psi.edu/pds/resource/busdemeotax.html
