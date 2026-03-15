@@ -2,7 +2,14 @@
 
 **Goal**: Multi-asteroid comparison, mission scenario builder, and Three.js solar system visualization (mobile and desktop).
 
-**Status**: Not started
+**Status**: Not started — ready to begin
+
+---
+
+## Pre-work (before writing Phase 6 code)
+
+- [ ] **Backfill compositions** — run `npm run backfillCompositions -- --limit 50` (or more) to populate `composition_summary` on dossier pages. Deferred from Phase 5; only meaningful once the swarm was verified working. Do this before building the comparison UI so there is real data to compare.
+- [ ] **Confirm Three.js approach** — decide between `@types/three` + direct import vs. Angular CDK portal. Read `project-specs/AI_ARCHITECTURE.md` section on visualization before writing any canvas code.
 
 ---
 
@@ -48,4 +55,4 @@
 
 ---
 
-*Phase document created: 2026-03-13*
+*Phase document created: 2026-03-13 — pre-work items added 2026-03-15*

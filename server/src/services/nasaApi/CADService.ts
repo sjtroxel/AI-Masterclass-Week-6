@@ -23,7 +23,7 @@ export class CADService extends ExternalAPIService {
     const today = new Date().toISOString().slice(0, 10);
     const encoded = encodeURIComponent(des);
     const url =
-      `${BASE}?des=${encoded}&date-min=${today}&date-max=%2B100&dist-max=0.5&fullname=true`;
+      `${BASE}?des=${encoded}&date-min=${today}&date-max=%2B36500&dist-max=0.5`;
 
     const raw = await this.get<CADResponse>(url);
     return this.parse(des, raw);

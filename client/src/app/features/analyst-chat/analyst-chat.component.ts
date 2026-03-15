@@ -26,12 +26,13 @@ import {
   OnInit,
 } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { AnalystService } from './analyst.service';
+import { AnalystService } from './analyst.service.js';
+import { MarkdownPipe } from '../../shared/pipes/markdown.pipe.js';
 
 @Component({
   selector: 'app-analyst-chat',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, MarkdownPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex flex-col h-screen md:h-[calc(100vh)] bg-space-950">
@@ -295,12 +296,12 @@ import { AnalystService } from './analyst.service';
                 <div class="flex-1 min-w-0">
                   <div class="px-4 py-3 rounded-2xl rounded-tl-sm
                               bg-space-900 border border-space-700
-                              text-sm text-space-100 leading-relaxed
-                              whitespace-pre-wrap wrap-break-word">
-                    @if (msg.text) {
-                      {{ msg.text }}
+                              text-sm text-space-100 leading-relaxed">
+                    @if (msg.text && !msg.isStreaming) {
+                      <div class="prose-markdown" [innerHTML]="msg.text | markdown"></div>
                     }
                     @if (msg.isStreaming) {
+                      <span class="whitespace-pre-wrap">{{ msg.text }}</span>
                       <span class="inline-block w-1.75 h-3.75 ml-0.5
                                    bg-nebula-400 align-middle animate-pulse
                                    rounded-xs"></span>

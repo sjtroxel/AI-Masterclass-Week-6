@@ -64,3 +64,52 @@
 .safe-area-pb {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
+
+/* ── Markdown prose rendering ───────────────────────────────────────────── */
+/* Used by [innerHTML]="... | markdown" in analysis and analyst-chat         */
+.prose-markdown p {
+  margin-top: 0;
+  margin-bottom: 0.875rem;
+}
+.prose-markdown p:last-child {
+  margin-bottom: 0;
+}
+.prose-markdown strong {
+  font-weight: 600;
+  color: #e2e8f0;
+}
+.prose-markdown em {
+  font-style: italic;
+}
+.prose-markdown h1,
+.prose-markdown h2,
+.prose-markdown h3 {
+  font-weight: 600;
+  color: #e2e8f0;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+.prose-markdown h1 { font-size: 1.125rem; }
+.prose-markdown h2 { font-size: 1rem; }
+.prose-markdown h3 { font-size: 0.9375rem; }
+.prose-markdown ul,
+.prose-markdown ol {
+  padding-left: 1.25rem;
+  margin-bottom: 0.875rem;
+}
+.prose-markdown ul { list-style-type: disc; }
+.prose-markdown ol { list-style-type: decimal; }
+.prose-markdown li {
+  margin-bottom: 0.25rem;
+}
+.prose-markdown hr {
+  border-color: #1a2744;
+  margin: 1rem 0;
+}
+.prose-markdown code {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  background: #0d1b2a;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+}

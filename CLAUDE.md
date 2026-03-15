@@ -165,7 +165,7 @@ The AI Analyst is architecturally constrained to these indices. It cannot use mo
 | 3 | RAG Knowledge Base | Complete ✓ |
 | 4 | AI Analyst | Complete ✓ |
 | 5 | Agent Swarm | Complete ✓ |
-| 6 | Mission Planning | Not started |
+| 6 | Mission Planning | **Next** — ready to begin |
 | 7 | Planetary Defense | Not started |
 | 8 | Hardening & Deployment | Not started |
 
@@ -191,4 +191,4 @@ Current phase details: `project-specs/roadmap/PHASE_5_AGENT_SWARM.md`
 - Three.js orbital viz is Phase 6 scope, not earlier
 - Apophis 2029 is a hand-crafted featured case study in Phase 7
 
-*Last updated: 2026-03-15 — Phase 5 complete ✓; 97 tests passing; real analyses verified (Apophis, Bennu); HANDOFF_THRESHOLD = 0.30; CADService URL encoding fixed; backfill deferred to Phase 6. Next: Phase 6 — Mission Planning.*
+*Last updated: 2026-03-15 — Phase 5 complete ✓; 97 tests passing; real analyses verified (Apophis, Bennu, Ryugu); HANDOFF_THRESHOLD = 0.30; all JPL/NASA API bugs fixed (CAD date-max was 100 days not years; NHATS types corrected); markdown rendering added; `validateExternalApis` script added. Next: Phase 6 — Mission Planning (see pre-work items in PHASE_6_MISSION_PLANNING.md).*

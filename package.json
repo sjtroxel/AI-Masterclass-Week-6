@@ -20,6 +20,7 @@
     "generateEmbeddings": "tsx --env-file=server/.env scripts/src/generateEmbeddings.ts",
     "ingestDocuments": "tsx --env-file=server/.env scripts/src/ingestDocuments.ts",
     "validateRag": "tsx --env-file=server/.env scripts/src/validateRag.ts",
+    "validateExternalApis": "tsx scripts/src/validateExternalApis.ts",
     "backfillCompositions": "tsx --env-file=server/.env scripts/src/backfillCompositions.ts",
     "prepare": "husky"
   },

@@ -8,14 +8,15 @@ import {
   input,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { ApiService, type AnalysisResponse, type AgentEvent } from '../../core/api.service';
+import { ApiService, type AnalysisResponse, type AgentEvent } from '../../core/api.service.js';
+import { MarkdownPipe } from '../../shared/pipes/markdown.pipe.js';
 
 type AnalysisState = 'idle' | 'running' | 'complete' | 'handoff' | 'error';
 
 @Component({
   selector: 'app-analysis',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, MarkdownPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="min-h-screen bg-space-950 pb-24 md:pb-8">
@@ -203,7 +204,8 @@ type AnalysisState = 'idle' | 'running' | 'complete' | 'handoff' | 'error';
                 </svg>
                 Synthesis
               </h2>
-              <p class="text-sm text-space-200 leading-relaxed whitespace-pre-line">{{ analysis()!.synthesis }}</p>
+              <div class="prose-markdown text-sm text-space-200 leading-relaxed"
+                   [innerHTML]="analysis()!.synthesis | markdown"></div>
             </section>
           }
 

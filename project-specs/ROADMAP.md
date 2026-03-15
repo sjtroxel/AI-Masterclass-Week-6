@@ -13,8 +13,8 @@
 | 2 | [Search & Browse](roadmap/PHASE_2_SEARCH_BROWSE.md) | **Complete** ✓ |
 | 3 | [RAG Knowledge Base](roadmap/PHASE_3_RAG_KNOWLEDGE_BASE.md) | **Complete** ✓ |
 | 4 | [The Analyst](roadmap/PHASE_4_ANALYST.md) | **Complete** ✓ |
-| 5 | [The Agent Swarm](roadmap/PHASE_5_AGENT_SWARM.md) | **In progress** — core swarm built; tests + backfill remain |
-| 6 | [Mission Planning & Orbital Visualization](roadmap/PHASE_6_MISSION_PLANNING.md) | Not started |
+| 5 | [The Agent Swarm](roadmap/PHASE_5_AGENT_SWARM.md) | **Complete** ✓ |
+| 6 | [Mission Planning & Orbital Visualization](roadmap/PHASE_6_MISSION_PLANNING.md) | **Next** — ready to begin |
 | 7 | [Planetary Defense Watch](roadmap/PHASE_7_PLANETARY_DEFENSE.md) | Not started |
 | 8 | [Hardening, Polish & Production](roadmap/PHASE_8_HARDENING.md) | Not started |
 
@@ -32,7 +32,7 @@
 | Three.js orbital viz | **In scope — Phase 6.** Desktop: full 3D. Mobile: orthographic top-down + touch controls. See `PHASE_6_MISSION_PLANNING.md`. |
 | Mobile strategy | **Mobile-first from Phase 0.** Every component built at 375px first, enhanced upward. Bottom nav on mobile, sidebar on desktop. |
 | Embedding refresh | **No automated schedule.** Portfolio project. One-time ingest. Manual re-run if desired; at most annually. |
-| HANDOFF_THRESHOLD | **Start at 0.55, calibrate in Phase 5.** Not a pre-implementation question — adjust after first 20–30 real analyses reveal where the threshold should actually sit. |
+| HANDOFF_THRESHOLD | **Calibrated to 0.30** (was 0.55). CAD/NHATS API bugs structurally capped orbital confidence; 0.30 is the empirically correct threshold after real analyses of Apophis, Bennu, and Ryugu. |
 | AI field ingest timing | **Split.** Raw NASA data: Phase 1. AI-generated fields (`composition_summary`, `resource_profile`, `economic_tier`): back-filled in Phase 5 after agents exist. Dossier shows "Pending analysis" in between. |
 | RAG document sourcing | **Phase 0 pre-code task.** Source list compiled and verified before Phase 3 begins. See `PHASE_0_FOUNDATION.md`. |
 
@@ -46,4 +46,4 @@
 
 ---
 
-*Document created: 2026-03-13 — last updated: 2026-03-15 (Phase 5 core complete)*
+*Document created: 2026-03-13 — last updated: 2026-03-15 (Phase 5 complete ✓; Phase 6 next)*

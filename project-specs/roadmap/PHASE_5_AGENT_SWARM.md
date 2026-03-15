@@ -117,4 +117,11 @@ See `AI_ARCHITECTURE.md` for the complete agent design: state object, orchestrat
 
 ---
 
-*Phase document created: 2026-03-13 — completed: 2026-03-15 (97 tests passing; real analyses verified on Apophis + Bennu; HANDOFF_THRESHOLD calibrated to 0.30; CADService URL encoding bug fixed; backfill deferred to Phase 6)*
+*Phase document created: 2026-03-13 — completed: 2026-03-15*
+
+*Post-completion bugs found and fixed (2026-03-15):*
+- *CAD `date-max=%2B100` was 100 days, not years — corrected to `%2B36500` (~100 years). Root cause of all "Live CAD call failed" assumptions in early analyses.*
+- *NHATS `NHATSObject` types wrong: `min_dv`/`min_dur` are nested `{ dv, dur }` objects, not plain strings. Per-asteroid endpoint returns object directly with no `{ count, data }` wrapper — `NHATSSingleResponse` type added. Both `listAll()` and `getByDesignation()` now correct.*
+- *Markdown rendering added: `MarkdownPipe` + `.prose-markdown` CSS. Synthesis and analyst-chat messages now render bold, paragraphs, lists.*
+- *`scripts/src/validateExternalApis.ts` added (`npm run validateExternalApis`) — smoke-tests CAD, NHATS, NeoWs, SBDB with known-good designations; prints exact URLs, HTTP status, parsed results.*
+- *Ryugu (162173) analysis verified post-fix: 80% orbital / 57% compositional / 25% economic / 47% risk / 53% overall — NHATS live (8.248 km/s), CAD live (2033-12-21 approach). All API calls now returning real data.*

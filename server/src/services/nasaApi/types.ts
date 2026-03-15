@@ -91,16 +91,37 @@ export interface SBDBPhysParam {
 
 // ── NHATS ────────────────────────────────────────────────────────────────────
 
+// List-all endpoint: GET /nhats.api (no params)
 export interface NHATSResponse {
   count: string;
   data: NHATSObject[];
 }
 
+// min_dv and min_dur are nested objects in both list and single responses.
+// The list response entry shape matches the single-object shape below.
+export interface NHATSDvSummary {
+  dv: string;   // km/s as string
+  dur: number;  // days
+}
+
 export interface NHATSObject {
-  des: string;      // designation
-  min_dv: string;   // minimum delta-V (km/s)
-  min_dur: string;  // minimum mission duration (days)
-  size?: string;    // diameter estimate (km)
+  des: string;
+  min_dv: NHATSDvSummary;
+  min_dur: NHATSDvSummary;
+  fullname?: string;
+  h?: string;
+}
+
+// Per-asteroid endpoint: GET /nhats.api?des=<des>
+// Returns the object directly — no { count, data } wrapper.
+export interface NHATSSingleResponse {
+  des: string;
+  min_dv: NHATSDvSummary;
+  min_dur: NHATSDvSummary;
+  fullname?: string;
+  h?: string;
+  // Response also has trajectory detail, radar obs, etc. — not needed here.
+  signature: { version: string; source: string };
 }
 
 // ── CAD ──────────────────────────────────────────────────────────────────────
