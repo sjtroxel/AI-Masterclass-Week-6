@@ -46,6 +46,8 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       Math.max(1, parseInt(String(req.query['per_page'] ?? '20'), 10)),
     );
 
+    const VALID_SORT_COLUMNS = ['name', 'absolute_magnitude_h', 'diameter_min_km', 'next_approach_date', 'nhats_min_delta_v_kms', 'has_real_name'] as const;
+
     const filters: AsteroidFilters = {};
 
     if (req.query['is_pha'] !== undefined) {
@@ -56,6 +58,13 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     }
     if (typeof req.query['spectral_type'] === 'string') {
       filters.spectral_type = req.query['spectral_type'];
+    }
+    if (typeof req.query['sort_by'] === 'string' &&
+        (VALID_SORT_COLUMNS as readonly string[]).includes(req.query['sort_by'])) {
+      filters.sort_by = req.query['sort_by'] as AsteroidFilters['sort_by'];
+    }
+    if (req.query['sort_dir'] === 'asc' || req.query['sort_dir'] === 'desc') {
+      filters.sort_dir = req.query['sort_dir'];
     }
 
     const result = await listAsteroids(page, perPage, filters);

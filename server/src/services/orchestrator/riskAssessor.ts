@@ -197,7 +197,7 @@ export async function runRiskAssessor(
 
   const apiKey = process.env['ANTHROPIC_API_KEY'];
   if (!apiKey) throw new AIServiceError('ANTHROPIC_API_KEY environment variable is not set');
-  const client = new Anthropic({ apiKey });
+  const client = new Anthropic({ apiKey, maxRetries: 5 });
 
   const userMessage = buildUserMessage(asteroid);
   const messages: Anthropic.MessageParam[] = [{ role: 'user', content: userMessage }];
@@ -313,8 +313,8 @@ export async function runRiskAssessor(
 
   logger.logOutput(
     normalizedOutput.dataCompleteness,
-    normalizedOutput.assumptionsRequired.length,
-    normalizedOutput.sources.length,
+    normalizedOutput.assumptionsRequired?.length ?? 0,
+    normalizedOutput.sources?.length ?? 0,
   );
 
   return { output: normalizedOutput, trace: logger.getTrace() };

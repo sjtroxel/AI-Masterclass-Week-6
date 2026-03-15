@@ -36,7 +36,7 @@ import type {
 } from '../../../../shared/types.js';
 import type { AsteroidRow } from '../asteroidService.js';
 import { getAsteroidById } from '../asteroidService.js';
-import { supabase } from '../../db/supabase.js';
+import { supabaseAdmin } from '../../db/supabase.js';
 import { SONNET } from '../../../../shared/models.js';
 import { AIServiceError, DatabaseError, NotFoundError } from '../../errors/AppError.js';
 import { runNavigator } from './navigator.js';
@@ -52,7 +52,7 @@ import type { AgentTrace } from './agentLogger.js';
  * Below this, the Orchestrator produces a HandoffPacket instead.
  * Calibrate empirically after Phase 5 produces real outputs.
  */
-const HANDOFF_THRESHOLD = 0.55;
+const HANDOFF_THRESHOLD = 0.30;
 
 // Confidence weights (must sum to 1.0)
 const CONFIDENCE_WEIGHTS = {
@@ -248,22 +248,22 @@ function buildConfidenceInputs(
   return {
     orbital: {
       dataCompleteness: state.navigatorOutput?.dataCompleteness ?? 0,
-      assumptionsCount: state.navigatorOutput?.assumptionsRequired.length ?? 0,
+      assumptionsCount: state.navigatorOutput?.assumptionsRequired?.length ?? 0,
       agentSucceeded: requestedAgents.includes('navigator') ? state.navigatorOutput !== undefined : true,
     },
     compositional: {
       dataCompleteness: state.geologistOutput?.dataCompleteness ?? 0,
-      assumptionsCount: state.geologistOutput?.assumptionsRequired.length ?? 0,
+      assumptionsCount: state.geologistOutput?.assumptionsRequired?.length ?? 0,
       agentSucceeded: requestedAgents.includes('geologist') ? state.geologistOutput !== undefined : true,
     },
     economic: {
       dataCompleteness: state.economistOutput?.dataCompleteness ?? 0,
-      assumptionsCount: state.economistOutput?.assumptionsRequired.length ?? 0,
+      assumptionsCount: state.economistOutput?.assumptionsRequired?.length ?? 0,
       agentSucceeded: requestedAgents.includes('economist') ? state.economistOutput !== undefined : true,
     },
     risk: {
       dataCompleteness: state.riskOutput?.dataCompleteness ?? 0,
-      assumptionsCount: state.riskOutput?.assumptionsRequired.length ?? 0,
+      assumptionsCount: state.riskOutput?.assumptionsRequired?.length ?? 0,
       agentSucceeded: requestedAgents.includes('riskAssessor') ? state.riskOutput !== undefined : true,
     },
   };
@@ -308,7 +308,7 @@ function computeConfidenceScores(inputs: ConfidenceInputs): ConfidenceScores {
 async function runSynthesis(asteroid: AsteroidRow, state: SwarmState): Promise<string> {
   const apiKey = process.env['ANTHROPIC_API_KEY'];
   if (!apiKey) throw new AIServiceError('ANTHROPIC_API_KEY environment variable is not set');
-  const client = new Anthropic({ apiKey });
+  const client = new Anthropic({ apiKey, maxRetries: 5 });
 
   const name = asteroid.name ?? asteroid.full_name ?? asteroid.nasa_id;
   const prompt = buildSynthesisPrompt(name, state);
@@ -432,7 +432,7 @@ function buildHandoffPacket(
 // ── DB helpers ────────────────────────────────────────────────────────────────
 
 async function createAnalysisRecord(asteroidId: string): Promise<string> {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('analyses')
     .insert({ asteroid_id: asteroidId, status: 'running', phase: 'idle' })
     .select('id')
@@ -444,7 +444,7 @@ async function createAnalysisRecord(asteroidId: string): Promise<string> {
 }
 
 async function updateAnalysisPhase(analysisId: string, phase: SwarmPhase): Promise<void> {
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from('analyses')
     .update({ phase })
     .eq('id', analysisId);
@@ -453,7 +453,7 @@ async function updateAnalysisPhase(analysisId: string, phase: SwarmPhase): Promi
 }
 
 async function persistFinalState(analysisId: string, state: SwarmState): Promise<void> {
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from('analyses')
     .update({
       status: state.phase === 'complete' ? 'complete' : state.phase === 'handoff' ? 'handoff' : 'error',

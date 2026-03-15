@@ -54,13 +54,25 @@ const LIST_COLUMNS = [
   'min_orbit_intersection_au',
   'nhats_accessible', 'nhats_min_delta_v_kms',
   'next_approach_date', 'next_approach_au',
-  'economic_tier', 'created_at', 'updated_at',
+  'economic_tier', 'has_real_name', 'created_at', 'updated_at',
 ].join(', ');
+
+const _VALID_SORT_COLUMNS = [
+  'name',
+  'absolute_magnitude_h',
+  'diameter_min_km',
+  'next_approach_date',
+  'nhats_min_delta_v_kms',
+  'has_real_name',
+] as const;
+type SortColumn = (typeof _VALID_SORT_COLUMNS)[number];
 
 export interface AsteroidFilters {
   is_pha?: boolean;
   nhats_accessible?: boolean;
   spectral_type?: string;
+  sort_by?: SortColumn;
+  sort_dir?: 'asc' | 'desc';
 }
 
 export async function listAsteroids(
@@ -85,9 +97,21 @@ export async function listAsteroids(
   const from = (page - 1) * perPage;
   const to = from + perPage - 1;
 
-  const { data, error, count } = await query
-    .order('absolute_magnitude_h', { ascending: true })
-    .range(from, to);
+  // Named-first sort: partition by has_real_name DESC (named first),
+  // then alphabetical by name within each partition.
+  let sortedQuery;
+  if (filters.sort_by === 'has_real_name') {
+    const nameAscending = (filters.sort_dir ?? 'asc') === 'asc';
+    sortedQuery = query
+      .order('has_real_name', { ascending: false, nullsFirst: false })
+      .order('name', { ascending: nameAscending, nullsFirst: false });
+  } else {
+    const sortColumn = filters.sort_by ?? 'absolute_magnitude_h';
+    const ascending = (filters.sort_dir ?? 'asc') === 'asc';
+    sortedQuery = query.order(sortColumn, { ascending, nullsFirst: false });
+  }
+
+  const { data, error, count } = await sortedQuery.range(from, to);
 
   if (error) throw new DatabaseError(error.message);
 

@@ -31,6 +31,7 @@ export interface AsteroidListItem {
   next_approach_date: string | null;
   next_approach_au: number | null;
   economic_tier: string | null;
+  has_real_name: boolean | null;
   created_at: string;
   updated_at: string;
 }
@@ -67,10 +68,14 @@ export interface PaginatedResponse<T> {
   per_page: number;
 }
 
+export type SortColumn = 'name' | 'absolute_magnitude_h' | 'diameter_min_km' | 'next_approach_date' | 'nhats_min_delta_v_kms' | 'has_real_name';
+
 export interface AsteroidFilters {
   is_pha?: boolean;
   nhats_accessible?: boolean;
   spectral_type?: string;
+  sort_by?: SortColumn;
+  sort_dir?: 'asc' | 'desc';
 }
 
 // ── Analysis types ─────────────────────────────────────────────────────────────
@@ -213,6 +218,12 @@ export class ApiService {
     }
     if (filters.spectral_type) {
       params = params.set('spectral_type', filters.spectral_type);
+    }
+    if (filters.sort_by) {
+      params = params.set('sort_by', filters.sort_by);
+    }
+    if (filters.sort_dir) {
+      params = params.set('sort_dir', filters.sort_dir);
     }
 
     return this.http.get<PaginatedResponse<AsteroidListItem>>(

@@ -181,7 +181,7 @@ export async function runEconomist(
 
   const apiKey = process.env['ANTHROPIC_API_KEY'];
   if (!apiKey) throw new AIServiceError('ANTHROPIC_API_KEY environment variable is not set');
-  const client = new Anthropic({ apiKey });
+  const client = new Anthropic({ apiKey, maxRetries: 5 });
 
   const userMessage = buildUserMessage(asteroid, state);
   const messages: Anthropic.MessageParam[] = [{ role: 'user', content: userMessage }];
@@ -282,8 +282,8 @@ export async function runEconomist(
 
   logger.logOutput(
     submitInput.dataCompleteness,
-    submitInput.assumptionsRequired.length,
-    submitInput.sources.length,
+    submitInput.assumptionsRequired?.length ?? 0,
+    submitInput.sources?.length ?? 0,
   );
 
   return { output: submitInput, trace: logger.getTrace() };

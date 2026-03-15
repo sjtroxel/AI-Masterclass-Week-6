@@ -8,9 +8,26 @@ import {
 import { FormsModule } from '@angular/forms';
 import { SearchService } from './search.service';
 import { AsteroidCardComponent } from './asteroid-card.component';
-import type { AsteroidFilters } from '../../core/api.service';
+import type { AsteroidFilters, SortColumn } from '../../core/api.service';
 
 const SPECTRAL_TYPES = ['C', 'S', 'X', 'B', 'D', 'F', 'G', 'K', 'L', 'P', 'Q', 'T', 'V'];
+
+interface SortOption {
+  label: string;
+  sort_by: SortColumn;
+  sort_dir: 'asc' | 'desc';
+}
+
+const SORT_OPTIONS: SortOption[] = [
+  { label: 'Size (H mag)',          sort_by: 'absolute_magnitude_h',  sort_dir: 'asc'  },
+  { label: 'Named first (A→Z)',     sort_by: 'has_real_name',          sort_dir: 'asc'  },
+  { label: 'Named first (Z→A)',     sort_by: 'has_real_name',          sort_dir: 'desc' },
+  { label: 'Diameter (largest)',    sort_by: 'diameter_min_km',        sort_dir: 'desc' },
+  { label: 'Diameter (smallest)',   sort_by: 'diameter_min_km',        sort_dir: 'asc'  },
+  { label: 'Next approach (soon)',  sort_by: 'next_approach_date',     sort_dir: 'asc'  },
+  { label: 'Delta-V (accessible)',  sort_by: 'nhats_min_delta_v_kms',  sort_dir: 'asc'  },
+  { label: 'Name (A→Z)',            sort_by: 'name',                   sort_dir: 'asc'  },
+];
 
 @Component({
   selector: 'app-search',
@@ -132,6 +149,24 @@ const SPECTRAL_TYPES = ['C', 'S', 'X', 'B', 'D', 'F', 'G', 'K', 'L', 'P', 'Q', '
         <!-- Results area -->
         <main class="flex-1 min-w-0 px-4 py-4 md:px-6 md:py-5">
 
+          <!-- Sort control — browse mode only -->
+          @if (svc.mode() === 'browse') {
+            <div class="mb-4 flex items-center gap-2">
+              <label for="sort-select" class="text-xs text-space-400 shrink-0">Sort by</label>
+              <select id="sort-select"
+                      [(ngModel)]="activeSortIndex"
+                      (ngModelChange)="applySort()"
+                      name="sortSelect"
+                      class="bg-space-800 border border-space-600 rounded-lg px-3 py-2
+                             text-sm text-white focus:outline-none focus:border-nebula-500
+                             min-h-[44px] cursor-pointer">
+                @for (opt of sortOptions; track $index) {
+                  <option [value]="$index">{{ opt.label }}</option>
+                }
+              </select>
+            </div>
+          }
+
           <!-- Semantic search badge -->
           @if (svc.mode() === 'semantic') {
             <div class="mb-4 flex items-center gap-2">
@@ -235,8 +270,10 @@ export class SearchComponent implements OnInit {
   readonly filterPha = signal(false);
   readonly filterNhats = signal(false);
   readonly filterSpectral = signal<string | undefined>(undefined);
+  readonly activeSortIndex = signal(0);
 
   readonly spectralTypes = SPECTRAL_TYPES;
+  readonly sortOptions = SORT_OPTIONS;
   readonly skeletons = Array(6).fill(null);
 
   readonly totalPages = () =>
@@ -279,6 +316,10 @@ export class SearchComponent implements OnInit {
     this.applyFilters();
   }
 
+  applySort(): void {
+    this.svc.loadBrowsePage(1, this.buildFilters());
+  }
+
   spectralBtnClass(type: string): string {
     return this.filterSpectral() === type
       ? 'bg-nebula-600 border-nebula-500 text-white'
@@ -301,6 +342,11 @@ export class SearchComponent implements OnInit {
     if (this.filterNhats()) filters.nhats_accessible = true;
     const spectral = this.filterSpectral();
     if (spectral) filters.spectral_type = spectral;
+    const sort = SORT_OPTIONS[this.activeSortIndex()];
+    if (sort) {
+      filters.sort_by = sort.sort_by;
+      filters.sort_dir = sort.sort_dir;
+    }
     return filters;
   }
 }

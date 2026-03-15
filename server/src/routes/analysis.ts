@@ -107,7 +107,44 @@ router.get('/:asteroidId/latest', async (req: Request, res: Response, next: Next
       throw new DatabaseError(error.message);
     }
 
-    res.json(data);
+    // Shape the raw DB row into the AnalysisResponse format (same as POST endpoint)
+    const row = data as {
+      id: string;
+      asteroid_id: string;
+      status: string;
+      phase: string;
+      navigator_output: unknown;
+      geologist_output: unknown;
+      economist_output: unknown;
+      risk_output: unknown;
+      confidence_scores: unknown;
+      synthesis: string | null;
+      handoff_packet: unknown;
+    };
+
+    res.json({
+      analysisId: row.id,
+      asteroidId: row.asteroid_id,
+      status: row.status,
+      phase: row.phase,
+      handoffTriggered: row.status === 'handoff',
+      confidenceScores: row.confidence_scores ?? null,
+      synthesis: row.synthesis ?? null,
+      handoffPacket: row.handoff_packet ?? null,
+      outputs: {
+        navigator: row.navigator_output ?? null,
+        geologist: row.geologist_output ?? null,
+        economist: row.economist_output ?? null,
+        risk: row.risk_output ?? null,
+      },
+      trace: {
+        totalLatencyMs: 0,
+        agentLatencies: {},
+        confidenceInputs: {},
+        agentEvents: {},
+      },
+      errors: [],
+    });
   } catch (err) {
     next(err);
   }

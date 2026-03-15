@@ -3,8 +3,9 @@ import { AppError } from '../errors/AppError.js';
 
 // Four-parameter signature required by Express to recognize as error handler.
 // _next is intentionally unused — the underscore prefix satisfies ESLint no-unused-vars.
-export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
+export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
   if (err instanceof AppError) {
+    console.error(`[${err.code}] ${req.method} ${req.path} → ${err.statusCode}: ${err.message}`);
     res.status(err.statusCode).json({
       error: {
         code: err.code ?? 'ERROR',

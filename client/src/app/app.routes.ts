@@ -23,7 +23,7 @@ export const routes: Routes = [
   },
   // Phase 5 — Agent Swarm Analysis
   {
-    path: 'analysis/:id',
+    path: 'analysis/:asteroidId',
     loadComponent: () =>
       import('./features/analysis/analysis.component').then((m) => m.AnalysisComponent),
   },

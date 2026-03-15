@@ -621,7 +621,12 @@ export class AnalysisComponent implements OnInit {
         this.state.set(result.handoffTriggered ? 'handoff' : 'complete');
       },
       error: (err: unknown) => {
-        const msg = err instanceof Error ? err.message : 'Analysis failed. Please try again.';
+        const httpErr = err as { error?: { error?: { message?: string }; message?: string }; message?: string };
+        const msg =
+          httpErr?.error?.error?.message ??
+          httpErr?.error?.message ??
+          httpErr?.message ??
+          'Analysis failed. Please try again.';
         this.errorMessage.set(msg);
         this.state.set('error');
       },
