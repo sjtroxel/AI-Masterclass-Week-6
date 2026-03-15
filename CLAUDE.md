@@ -163,7 +163,7 @@ The AI Analyst is architecturally constrained to these indices. It cannot use mo
 | 1 | Data Layer | Complete ✓ |
 | 2 | Search & Browse | Complete ✓ |
 | 3 | RAG Knowledge Base | Complete ✓ |
-| 4 | AI Analyst | Not started |
+| 4 | AI Analyst | Complete ✓ |
 | 5 | Agent Swarm | Not started |
 | 6 | Mission Planning | Not started |
 | 7 | Planetary Defense | Not started |
@@ -191,4 +191,4 @@ Current phase details: `project-specs/roadmap/PHASE_3_RAG_KNOWLEDGE_BASE.md`
 - Three.js orbital viz is Phase 6 scope, not earlier
 - Apophis 2029 is a hand-crafted featured case study in Phase 7
 
-*Last updated: 2026-03-15 — Phase 3 complete; ragService.ts dual-index retrieval done; 17/20 quality validation pass (81.1% avg similarity); Phase 4 (AI Analyst) is next*
+*Last updated: 2026-03-15 — Phase 4 complete; AI Analyst streaming chat with RAG grounding, observability trace UI, session management, dossier context anchoring; Phase 5 (Agent Swarm) is next*

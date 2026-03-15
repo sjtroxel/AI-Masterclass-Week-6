@@ -30,7 +30,9 @@ export const routes: Routes = [
   {
     path: 'analyst',
     loadComponent: () =>
-      import('./features/search/search.component').then((m) => m.SearchComponent),
+      import('./features/analyst-chat/analyst-chat.component').then(
+        (m) => m.AnalystChatComponent,
+      ),
   },
   {
     path: 'defense',

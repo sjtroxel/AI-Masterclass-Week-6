@@ -6,6 +6,7 @@ import rateLimit from 'express-rate-limit';
 
 import healthRouter from './routes/health.js';
 import asteroidsRouter from './routes/asteroids.js';
+import analystRouter from './routes/analyst.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
@@ -38,6 +39,7 @@ app.use(
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use('/api', healthRouter);
 app.use('/api/asteroids', asteroidsRouter);
+app.use('/api/analyst', analystRouter);
 
 // ── Error handler (must be last) ─────────────────────────────────────────────
 app.use(errorHandler);

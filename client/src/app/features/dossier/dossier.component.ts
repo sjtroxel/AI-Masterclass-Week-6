@@ -7,7 +7,7 @@ import {
   ChangeDetectionStrategy,
   input,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { JsonPipe } from '@angular/common';
 import { ApiService, type AsteroidDetail } from '../../core/api.service';
 
@@ -95,12 +95,29 @@ import { ApiService, type AsteroidDetail } from '../../core/api.service';
                   </p>
                 }
               </div>
-              @if (asteroid()!.is_pha) {
-                <span class="shrink-0 mt-1 px-3 py-1 rounded-full text-xs font-semibold
-                             bg-hazard-500/20 text-hazard-400 border border-hazard-500/30 uppercase tracking-wide">
-                  Potentially Hazardous
-                </span>
-              }
+              <div class="flex items-center gap-2 shrink-0">
+                @if (asteroid()!.is_pha) {
+                  <span class="px-3 py-1 rounded-full text-xs font-semibold
+                               bg-hazard-500/20 text-hazard-400 border border-hazard-500/30 uppercase tracking-wide">
+                    Hazardous
+                  </span>
+                }
+                <!-- Ask Analyst button -->
+                <button (click)="openAnalyst()"
+                        class="flex items-center gap-1.5 px-3 py-1.5
+                               bg-nebula-600/20 hover:bg-nebula-600/30
+                               border border-nebula-500/30 hover:border-nebula-500/50
+                               text-nebula-400 hover:text-nebula-300
+                               rounded-lg text-xs font-medium
+                               transition-colors min-h-9">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="1.5"
+                       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
+                  </svg>
+                  Ask Analyst
+                </button>
+              </div>
             </div>
           </header>
 
@@ -274,6 +291,7 @@ export class DossierComponent implements OnInit {
   readonly id = input<string | undefined>(undefined);
 
   private readonly api = inject(ApiService);
+  private readonly router = inject(Router);
 
   readonly asteroid = signal<AsteroidDetail | null>(null);
   readonly isLoading = signal(false);
@@ -343,6 +361,11 @@ export class DossierComponent implements OnInit {
   ngOnInit(): void {
     const id = this.id();
     if (id) this.loadAsteroid(id);
+  }
+
+  openAnalyst(): void {
+    const id = this.id();
+    void this.router.navigate(['/analyst'], id ? { queryParams: { asteroid: id } } : {});
   }
 
   private loadAsteroid(id: string): void {
