@@ -160,6 +160,21 @@ export interface RagChunk {
   created_at: string;
 }
 
+/** A retrieved chunk with similarity score and index label — returned by ragService. */
+export interface RagResult {
+  id: string;
+  source_id: string;
+  source_title: string;
+  source_url: string | null;
+  source_year: number;
+  chunk_index: number;
+  content: string;
+  metadata: Record<string, unknown>;
+  similarity: number;
+  /** Which knowledge index this chunk came from. */
+  source_type: 'science' | 'scenario';
+}
+
 // ── API responses ─────────────────────────────────────────────────────────────
 
 export interface ApiError {
