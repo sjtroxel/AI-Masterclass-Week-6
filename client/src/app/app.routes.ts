@@ -39,6 +39,22 @@ export const routes: Routes = [
         (m) => m.AnalystChatComponent,
       ),
   },
+  // Phase 6 — Mission Planning
+  {
+    path: 'mission-planning',
+    loadComponent: () =>
+      import('./features/mission-planning/mission-planning.component').then(
+        (m) => m.MissionPlanningComponent,
+      ),
+  },
+  // Phase 6 — Orbital Canvas (standalone route for full-screen view)
+  {
+    path: 'orbital-canvas',
+    loadComponent: () =>
+      import('./features/orbital-canvas/orbital-canvas-page.component').then(
+        (m) => m.OrbitalCanvasPageComponent,
+      ),
+  },
   {
     path: 'defense',
     loadComponent: () =>

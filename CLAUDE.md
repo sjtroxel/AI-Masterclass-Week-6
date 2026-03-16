@@ -165,12 +165,12 @@ The AI Analyst is architecturally constrained to these indices. It cannot use mo
 | 3 | RAG Knowledge Base | Complete ✓ |
 | 4 | AI Analyst | Complete ✓ |
 | 5 | Agent Swarm | Complete ✓ |
-| 6 | Mission Planning | **In progress** — backend complete |
-| 7 | Planetary Defense | Not started |
+| 6 | Mission Planning | Complete ✓ |
+| 7 | Planetary Defense | **Next** |
 | 8 | Hardening & Deployment | Not started |
 
 Full roadmap: `project-specs/ROADMAP.md`
-Current phase details: `project-specs/roadmap/PHASE_6_MISSION_PLANNING.md`
+Current phase details: `project-specs/roadmap/PHASE_7_PLANETARY_DEFENSE.md`
 
 ---
 
@@ -188,7 +188,7 @@ Current phase details: `project-specs/roadmap/PHASE_6_MISSION_PLANNING.md`
 - No NgRx — Angular signals are sufficient
 - No LangChain — direct Anthropic SDK + hand-rolled orchestration
 - Deployment is Phase 8 only — no skeleton deploys
-- Three.js orbital viz is Phase 6 scope, not earlier
+- Three.js orbital viz is Phase 6 scope, not earlier; `@types/three` IS required (three@0.183.x ships no .d.ts)
 - Apophis 2029 is a hand-crafted featured case study in Phase 7
 
-*Last updated: 2026-03-16 — Phase 6 backend complete (partial); 132 tests passing; mission planning service + 3 endpoints (`/api/planning/compare`, `/api/planning/scenario`, `/api/planning/portfolio`) + 35 new tests; new shared types: `MissionConstraints`, `CandidateScore`, `ComparisonResponse`, `ScenarioResponse`, `PortfolioResponse`. Frontend (mission builder UI, orbital canvas) still to do.*
+*Last updated: 2026-03-16 — Phase 6 complete ✓ (including stretch goals); 146 tests passing (132 server + 14 client Vitest). Phase 6 delivered: 3 planning endpoints + 35 server tests; mission-planning feature slice; orbital-canvas feature slice (Three.js, orbit-math, planet-positions); orbit highlight + epoch position marker on dossier page; `highlightId` input + `meanAnomalyDeg` support on OrbitalCanvasComponent; 14 orbit-math unit tests + 12 E2E tests for mission planning; client Vitest setup. Phase 7 (Planetary Defense) is next — see `project-specs/roadmap/PHASE_7_HANDOFF.md`.*

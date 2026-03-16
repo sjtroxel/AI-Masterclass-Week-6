@@ -10,11 +10,16 @@ import {
 import { RouterLink, Router } from '@angular/router';
 import { JsonPipe } from '@angular/common';
 import { ApiService, type AsteroidDetail } from '../../core/api.service';
+import {
+  OrbitalCanvasComponent,
+  asteroidDetailToOrbital,
+  type OrbitalAsteroid,
+} from '../orbital-canvas/orbital-canvas.component';
 
 @Component({
   selector: 'app-dossier',
   standalone: true,
-  imports: [RouterLink, JsonPipe],
+  imports: [RouterLink, JsonPipe, OrbitalCanvasComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <!-- Empty state when accessed directly without an id -->
@@ -289,6 +294,23 @@ import { ApiService, type AsteroidDetail } from '../../core/api.service';
               </section>
             </div>
           }
+
+          <!-- Orbital Canvas — shown when orbital elements are available -->
+          @if (orbitalAsteroid()) {
+            <div class="px-4 pb-6 md:px-8">
+              <div class="mb-2 flex items-center justify-between">
+                <h2 class="text-sm font-semibold text-white">Orbital View</h2>
+                <span class="text-[10px] text-space-500">
+                  White orbit = {{ displayName() }} · yellow dot = current epoch position
+                </span>
+              </div>
+              <app-orbital-canvas
+                [asteroids]="[orbitalAsteroid()!]"
+                [highlightId]="asteroid()!.nasa_id"
+                (asteroidSelected)="onOrbitalSelect($event)" />
+            </div>
+          }
+
         }
       </div>
     }
@@ -304,6 +326,14 @@ export class DossierComponent implements OnInit {
   readonly asteroid = signal<AsteroidDetail | null>(null);
   readonly isLoading = signal(false);
   readonly error = signal<string | null>(null);
+
+  /** Converted orbital data for the canvas — null when orbital elements missing */
+  readonly orbitalAsteroid = computed<OrbitalAsteroid | null>(() => {
+    const a = this.asteroid();
+    if (!a) return null;
+    if (a.semi_major_axis_au === null || a.eccentricity === null || a.inclination_deg === null) return null;
+    return asteroidDetailToOrbital(a);
+  });
 
   readonly displayName = computed(() => {
     const a = this.asteroid();
@@ -374,6 +404,12 @@ export class DossierComponent implements OnInit {
   openAnalyst(): void {
     const id = this.id();
     void this.router.navigate(['/analyst'], id ? { queryParams: { asteroid: id } } : {});
+  }
+
+  onOrbitalSelect(nasaId: string): void {
+    // Already on this asteroid's dossier; clicking its marker just confirms we're here
+    // In future, could navigate to that asteroid's dossier if showing neighbors
+    void nasaId;
   }
 
   private loadAsteroid(id: string): void {

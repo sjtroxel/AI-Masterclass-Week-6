@@ -104,7 +104,7 @@ test.describe('Navigation', () => {
     await expect(nav).toBeVisible();
 
     // All 5 nav items present
-    for (const label of ['Search', 'Dossier', 'Analysis', 'Analyst', 'Defense']) {
+    for (const label of ['Search', 'Dossier', 'Analysis', 'Analyst', 'Plan']) {
       await expect(nav.getByText(label)).toBeVisible();
     }
   });

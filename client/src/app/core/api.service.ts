@@ -194,6 +194,68 @@ export interface AnalysisResponse {
   errors: { agent: string; message: string; code: string }[];
 }
 
+// ── Mission planning types ─────────────────────────────────────────────────────
+
+export interface MissionConstraints {
+  maxDeltaV_kms?: number;
+  missionWindowStart?: string;
+  missionWindowEnd?: string;
+  missionType?: 'flyby' | 'rendezvous' | 'sample_return' | 'mining';
+  priorities?: {
+    accessibility: number;
+    economics: number;
+    risk: number;
+  };
+}
+
+export interface CandidateScore {
+  asteroidId: string;
+  asteroidName: string;
+  rank: number;
+  accessibilityRating: 'exceptional' | 'good' | 'marginal' | 'inaccessible';
+  minDeltaV_kms: number | null;
+  missionDurationDays: number | null;
+  orbitalClass: string;
+  score: number;
+  scoreBreakdown: {
+    accessibility: number;
+    economics: number;
+    constraintSatisfaction: number;
+  };
+  rationale: string;
+  navigatorOutput: NavigatorOutput;
+  passesConstraints: boolean;
+  constraintViolations: string[];
+}
+
+export interface ComparisonResponse {
+  candidates: CandidateScore[];
+  missionParams: {
+    maxDeltaV_kms?: number;
+    missionWindowStart?: string;
+    missionWindowEnd?: string;
+    missionType?: string;
+  };
+  rankedAt: string;
+}
+
+export interface ScenarioResponse {
+  recommendations: CandidateScore[];
+  constraints: MissionConstraints;
+  topPick: CandidateScore | null;
+  feasibleCount: number;
+  rankedAt: string;
+}
+
+export interface PortfolioResponse {
+  optimalPortfolio: CandidateScore[];
+  portfolioScore: number;
+  allCandidates: CandidateScore[];
+  constraints: MissionConstraints;
+  portfolioRationale: string;
+  rankedAt: string;
+}
+
 // ── Service ───────────────────────────────────────────────────────────────────
 
 @Injectable({ providedIn: 'root' })
@@ -262,5 +324,39 @@ export class ApiService {
 
   getLatestAnalysis(asteroidId: string): Observable<AnalysisResponse> {
     return this.http.get<AnalysisResponse>(`${this.base}/analysis/${asteroidId}/latest`);
+  }
+
+  // ── Mission planning ─────────────────────────────────────────────────────────
+
+  compareAsteroids(
+    asteroidIds: string[],
+    constraints?: MissionConstraints,
+  ): Observable<ComparisonResponse> {
+    return this.http.post<ComparisonResponse>(`${this.base}/planning/compare`, {
+      asteroidIds,
+      missionParams: constraints,
+    });
+  }
+
+  buildScenario(
+    asteroidIds: string[],
+    constraints?: MissionConstraints,
+  ): Observable<ScenarioResponse> {
+    return this.http.post<ScenarioResponse>(`${this.base}/planning/scenario`, {
+      asteroidIds,
+      constraints,
+    });
+  }
+
+  buildPortfolio(
+    asteroidIds: string[],
+    constraints?: MissionConstraints,
+    portfolioSize?: number,
+  ): Observable<PortfolioResponse> {
+    return this.http.post<PortfolioResponse>(`${this.base}/planning/portfolio`, {
+      asteroidIds,
+      constraints,
+      ...(portfolioSize !== undefined && { portfolioSize }),
+    });
   }
 }
