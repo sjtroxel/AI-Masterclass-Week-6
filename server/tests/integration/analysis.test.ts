@@ -265,7 +265,7 @@ describe('GET /api/analysis/:asteroidId/latest', () => {
     const res = await request(app).get('/api/analysis/test-asteroid-uuid/latest');
 
     expect(res.status).toBe(200);
-    expect(res.body.id).toBe('analysis-record-uuid');
+    expect(res.body.analysisId).toBe('analysis-record-uuid');
     expect(res.body.status).toBe('complete');
   });
 

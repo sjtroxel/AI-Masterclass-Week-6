@@ -143,8 +143,8 @@ describe('NHATSService', () => {
   const nhatsResponse = {
     count: '2',
     data: [
-      { des: '433', min_dv: '5.31', min_dur: '370' },
-      { des: '101955', min_dv: '4.98', min_dur: '460' },
+      { des: '433', min_dv: { dv: '5.31', dur: 370 }, min_dur: { dv: '5.31', dur: 370 } },
+      { des: '101955', min_dv: { dv: '4.98', dur: 460 }, min_dur: { dv: '4.98', dur: 460 } },
     ],
   };
 

@@ -9,7 +9,37 @@
 ## Pre-work (before writing Phase 6 code)
 
 - [ ] **Backfill compositions** — run `npm run backfillCompositions -- --limit 50` (or more) to populate `composition_summary` on dossier pages. Deferred from Phase 5; only meaningful once the swarm was verified working. Do this before building the comparison UI so there is real data to compare.
-- [ ] **Confirm Three.js approach** — decide between `@types/three` + direct import vs. Angular CDK portal. Read `project-specs/AI_ARCHITECTURE.md` section on visualization before writing any canvas code.
+- [x] **Confirm Three.js approach** — decided 2026-03-16. See decision record below.
+
+---
+
+## Three.js Decision Record (2026-03-16)
+
+**Chosen approach**: `three` direct import (ships its own types). No Angular CDK Portal.
+
+**Rationale**: CDK Portal is for rendering content outside its natural DOM position (modals, overlays). An orbital canvas living at a fixed route doesn't need it — it's unnecessary abstraction and an extra dependency.
+
+**Angular 21 integration patterns — do not deviate from these**:
+- `afterNextRender()` — initialize Three.js here (guarantees DOM exists); replaces `ngAfterViewInit`
+- `NgZone.runOutsideAngular()` — wrap the entire `requestAnimationFrame` animation loop; prevents 60fps change-detection thrash
+- Signal `input()` + `effect()` — receive asteroid data from parent, trigger scene updates reactively
+- `DestroyRef.onDestroy()` — call `renderer.dispose()`, `cancelAnimationFrame()`, dispose geometries/materials; Three.js leaks GPU memory without explicit cleanup
+
+**Mobile**:
+- `OrbitControls` (from `three/addons/controls/OrbitControls.js`) handles pinch-to-zoom and one-finger pan natively — no separate touch implementation
+- Switch camera type by viewport: `OrthographicCamera` (mobile, top-down locked) / `PerspectiveCamera` (desktop)
+- Show only current asteroid + nearest neighbors by close approach on mobile; full set on desktop
+- SVG fallback: **deferred** — attempt orthographic Three.js first; only implement SVG renderer if 375px testing reveals real usability problems. Do not pre-build it.
+
+**File layout**:
+```
+client/src/app/features/orbital-canvas/
+  orbital-canvas.component.ts   ← Three.js scene, signal inputs, NgZone isolation
+  orbit-math.ts                 ← Pure functions: orbital elements → ellipse points
+  planet-positions.ts           ← Simplified Kepler approximation for inner planets
+```
+
+**Install**: `npm install three --workspace=client` (no additional packages needed)
 
 ---
 
@@ -55,4 +85,4 @@
 
 ---
 
-*Phase document created: 2026-03-13 — pre-work items added 2026-03-15*
+*Phase document created: 2026-03-13 — pre-work items added 2026-03-15 — both pre-work items complete 2026-03-16; see PHASE_6a_HANDOFF.md*

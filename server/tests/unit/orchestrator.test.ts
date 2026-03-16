@@ -53,7 +53,7 @@ vi.mock('../../src/services/asteroidService.js', () => ({
 
 vi.mock('../../src/db/supabase.js', () => ({
   supabase: { from: mockSupabaseFrom },
-  supabaseAdmin: {},
+  supabaseAdmin: { from: mockSupabaseFrom },
 }));
 
 vi.mock('@anthropic-ai/sdk', () => ({
@@ -311,9 +311,9 @@ describe('runOrchestrator — confidence formula', () => {
 });
 
 describe('runOrchestrator — handoff trigger', () => {
-  it('triggers handoff when overall confidence < 0.55', async () => {
-    // All agents return dataCompleteness=0.3 → overall=0.3 < 0.55
-    setupAgentMocks(0.3, 0.3, 0.3, 0.3);
+  it('triggers handoff when overall confidence < 0.30', async () => {
+    // All agents return dataCompleteness=0.2 → overall=0.2 < 0.30 (HANDOFF_THRESHOLD)
+    setupAgentMocks(0.2, 0.2, 0.2, 0.2);
 
     const { state } = await runOrchestrator(mockAsteroid.id, {});
 
@@ -324,7 +324,7 @@ describe('runOrchestrator — handoff trigger', () => {
   });
 
   it('handoffPacket has required fields', async () => {
-    setupAgentMocks(0.3, 0.3, 0.3, 0.3);
+    setupAgentMocks(0.2, 0.2, 0.2, 0.2);
 
     const { state } = await runOrchestrator(mockAsteroid.id, {});
 
