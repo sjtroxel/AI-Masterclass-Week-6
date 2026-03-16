@@ -45,11 +45,13 @@ client/src/app/features/orbital-canvas/
 
 ## Deliverables
 
-### Mission Planning — Backend
-- [ ] Multi-asteroid comparison: run Navigator Agent across multiple candidates simultaneously
-- [ ] Mission scenario builder endpoint: accepts user constraints (max delta-V, mission window, priorities) → returns ranked recommendations
-- [ ] "Portfolio" view logic: given N candidates, which combination maximizes value within constraints?
-- [ ] Server tests for planning logic
+### Mission Planning — Backend ✓
+- [x] Multi-asteroid comparison: `POST /api/planning/compare` — runs Navigator in parallel across up to 10 candidates, returns ranked list (`ComparisonResponse`)
+- [x] Mission scenario builder endpoint: `POST /api/planning/scenario` — accepts constraints + priority weights, returns ranked recommendations with constraint violation detail (`ScenarioResponse`)
+- [x] "Portfolio" view logic: `POST /api/planning/portfolio` — brute-force optimal K-asteroid combination with orbital diversity bonus (`PortfolioResponse`)
+- [x] Server tests for planning logic — 35 tests (19 integration, 16 unit); all pass
+- [x] New shared types: `MissionConstraints`, `CandidateScore`, `ComparisonResponse`, `ScenarioResponse`, `PortfolioResponse`
+- [x] `planningService.ts` with `compareAsteroids`, `buildScenario`, `optimizePortfolio`
 
 ### Mission Planning — Frontend
 - [ ] Mission scenario builder UI — mobile-first inputs for delta-V budget, mission window, priority weighting

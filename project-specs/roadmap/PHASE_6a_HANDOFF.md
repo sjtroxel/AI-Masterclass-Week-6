@@ -6,10 +6,23 @@
 
 ## State of the Project Right Now
 
-- **97/97 tests passing** — run `npm run typecheck && npm run test` to verify before touching anything
+- **132/132 tests passing** — run `npm run typecheck && npm run test` to verify before touching anything
 - **Phase 5 is fully complete** — agent swarm, orchestrator, routes, frontend analysis page, all tests
-- **Phase 6 pre-work is fully complete** — both items done, ready to write Phase 6 code immediately
+- **Phase 6 backend is complete** — mission planning service + 3 endpoints + 35 new tests; see below
 - **50 asteroids backfilled** — `composition_summary`, `resource_profile`, `economic_tier` populated via Geologist agent. Bennu and Ryugu also have full 4-agent swarm analyses. Do not run more bulk backfill — Phase 8 only.
+
+### Phase 6 Backend — Done ✓
+
+New files:
+- `server/src/services/planningService.ts` — `compareAsteroids`, `buildScenario`, `optimizePortfolio`
+- `server/src/routes/planning.ts` — `POST /api/planning/{compare,scenario,portfolio}`
+- `server/tests/integration/planning.test.ts` — 19 integration tests
+- `server/tests/unit/planningService.test.ts` — 16 unit tests
+
+New shared types in `shared/types.d.ts`:
+`MissionConstraints`, `CandidateScore`, `ComparisonResponse`, `ScenarioResponse`, `PortfolioResponse`
+
+Scoring logic: accessibility rating → 0–1, `economic_tier` DB field → 0–1, constraint satisfaction → 0–1; normalized priority weights; constraint violations (delta-V budget, launch window) detected and surfaced. Portfolio optimizer: brute-force best K-combination with small orbital diversity bonus (feasible for ≤10 candidates).
 
 ---
 
@@ -46,13 +59,13 @@ Full decision record is in `project-specs/roadmap/PHASE_6_MISSION_PLANNING.md` u
 
 Full deliverable list is in `project-specs/roadmap/PHASE_6_MISSION_PLANNING.md`. Summary:
 
-### Backend (build first)
-1. Multi-asteroid comparison endpoint — run Navigator across multiple candidates simultaneously
-2. Mission scenario builder — accepts constraints (max delta-V, window, priorities) → ranked recommendations
-3. Portfolio view logic — which combination of N asteroids maximizes value within constraints
-4. Server tests for all of the above (Vitest, follow patterns in `server/tests/`)
+### Backend ✓ Complete
+1. ~~Multi-asteroid comparison endpoint~~ — done: `POST /api/planning/compare`
+2. ~~Mission scenario builder~~ — done: `POST /api/planning/scenario`
+3. ~~Portfolio view logic~~ — done: `POST /api/planning/portfolio`
+4. ~~Server tests~~ — done: 35 tests passing
 
-### Frontend (build after backend)
+### Frontend (next)
 5. Mission scenario builder UI — mobile-first, signal-first
 6. Ranked recommendations display
 7. Portfolio comparison view
@@ -107,3 +120,4 @@ npm run test:e2e           # Playwright (requires dev servers running)
 ---
 
 *Written: 2026-03-16 — Phase 5 complete ✓; 97 tests passing; 50 asteroids backfilled; Three.js approach decided; Phase 6 ready to begin.*
+*Updated: 2026-03-16 — Phase 6 backend complete ✓; 132 tests passing; frontend (mission builder UI + orbital canvas) is next.*

@@ -293,6 +293,70 @@ export interface PaginatedResponse<T> {
   per_page: number;
 }
 
+// ── Mission planning ──────────────────────────────────────────────────────────
+
+export interface MissionConstraints {
+  maxDeltaV_kms?: number;
+  missionWindowStart?: string;   // ISO date — earliest acceptable launch
+  missionWindowEnd?: string;     // ISO date — latest acceptable launch
+  missionType?: MissionParams['missionType'];
+  /** Relative importance weights — normalized before scoring. Default: 0.5 / 0.3 / 0.2. */
+  priorities?: {
+    accessibility: number;
+    economics: number;
+    risk: number;
+  };
+}
+
+export interface CandidateScore {
+  asteroidId: string;
+  asteroidName: string;
+  rank: number;
+  accessibilityRating: NavigatorOutput['accessibilityRating'];
+  minDeltaV_kms: number | null;
+  missionDurationDays: number | null;
+  orbitalClass: string;
+  /** 0–1 composite score (higher = better candidate for this mission). */
+  score: number;
+  scoreBreakdown: {
+    accessibility: number;           // 0–1
+    economics: number;               // 0–1
+    constraintSatisfaction: number;  // 0–1
+  };
+  /** Human-readable rationale for this candidate's ranking. */
+  rationale: string;
+  navigatorOutput: NavigatorOutput;
+  passesConstraints: boolean;
+  constraintViolations: string[];
+}
+
+export interface ComparisonResponse {
+  candidates: CandidateScore[];
+  missionParams: MissionParams;
+  rankedAt: string;
+}
+
+export interface ScenarioResponse {
+  recommendations: CandidateScore[];
+  constraints: MissionConstraints;
+  /** Highest-ranked candidate, or null if no candidates. */
+  topPick: CandidateScore | null;
+  /** Number of candidates that satisfy all hard constraints. */
+  feasibleCount: number;
+  rankedAt: string;
+}
+
+export interface PortfolioResponse {
+  optimalPortfolio: CandidateScore[];
+  /** Average score across portfolio candidates. */
+  portfolioScore: number;
+  /** All candidates scored (for reference/comparison in UI). */
+  allCandidates: CandidateScore[];
+  constraints: MissionConstraints;
+  portfolioRationale: string;
+  rankedAt: string;
+}
+
 // ── Analysis persistence (analyses table) ─────────────────────────────────────
 
 export type AnalysisStatus = 'pending' | 'running' | 'complete' | 'handoff' | 'error';

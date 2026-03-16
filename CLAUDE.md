@@ -165,12 +165,12 @@ The AI Analyst is architecturally constrained to these indices. It cannot use mo
 | 3 | RAG Knowledge Base | Complete ✓ |
 | 4 | AI Analyst | Complete ✓ |
 | 5 | Agent Swarm | Complete ✓ |
-| 6 | Mission Planning | **Next** — ready to begin |
+| 6 | Mission Planning | **In progress** — backend complete |
 | 7 | Planetary Defense | Not started |
 | 8 | Hardening & Deployment | Not started |
 
 Full roadmap: `project-specs/ROADMAP.md`
-Current phase details: `project-specs/roadmap/PHASE_5_AGENT_SWARM.md`
+Current phase details: `project-specs/roadmap/PHASE_6_MISSION_PLANNING.md`
 
 ---
 
@@ -191,4 +191,4 @@ Current phase details: `project-specs/roadmap/PHASE_5_AGENT_SWARM.md`
 - Three.js orbital viz is Phase 6 scope, not earlier
 - Apophis 2029 is a hand-crafted featured case study in Phase 7
 
-*Last updated: 2026-03-15 — Phase 5 complete ✓; 97 tests passing; real analyses verified (Apophis, Bennu, Ryugu); HANDOFF_THRESHOLD = 0.30; all JPL/NASA API bugs fixed (CAD date-max was 100 days not years; NHATS types corrected); markdown rendering added; `validateExternalApis` script added. Next: Phase 6 — Mission Planning (see pre-work items in PHASE_6_MISSION_PLANNING.md).*
+*Last updated: 2026-03-16 — Phase 6 backend complete (partial); 132 tests passing; mission planning service + 3 endpoints (`/api/planning/compare`, `/api/planning/scenario`, `/api/planning/portfolio`) + 35 new tests; new shared types: `MissionConstraints`, `CandidateScore`, `ComparisonResponse`, `ScenarioResponse`, `PortfolioResponse`. Frontend (mission builder UI, orbital canvas) still to do.*
