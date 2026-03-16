@@ -66,6 +66,9 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     if (req.query['sort_dir'] === 'asc' || req.query['sort_dir'] === 'desc') {
       filters.sort_dir = req.query['sort_dir'];
     }
+    if (req.query['include_orbital'] !== undefined) {
+      filters.include_orbital = req.query['include_orbital'] === 'true';
+    }
 
     const result = await listAsteroids(page, perPage, filters);
     res.json(result);

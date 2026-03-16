@@ -57,6 +57,15 @@ export interface AsteroidDetail extends AsteroidListItem {
   resource_profile: Record<string, unknown> | null;
 }
 
+export interface AsteroidWithOrbital extends AsteroidListItem {
+  semi_major_axis_au: number | null;
+  eccentricity: number | null;
+  inclination_deg: number | null;
+  longitude_asc_node_deg: number | null;
+  argument_perihelion_deg: number | null;
+  mean_anomaly_deg: number | null;
+}
+
 export interface AsteroidSearchResult extends AsteroidListItem {
   similarity: number;
 }
@@ -76,6 +85,7 @@ export interface AsteroidFilters {
   spectral_type?: string;
   sort_by?: SortColumn;
   sort_dir?: 'asc' | 'desc';
+  include_orbital?: boolean;
 }
 
 // ── Analysis types ─────────────────────────────────────────────────────────────
@@ -289,6 +299,38 @@ export class ApiService {
     }
 
     return this.http.get<PaginatedResponse<AsteroidListItem>>(
+      `${this.base}/asteroids`,
+      { params },
+    );
+  }
+
+  listAsteroidsWithOrbital(
+    page: number,
+    perPage: number,
+    filters: Omit<AsteroidFilters, 'include_orbital'> = {},
+  ): Observable<PaginatedResponse<AsteroidWithOrbital>> {
+    let params = new HttpParams()
+      .set('page', String(page))
+      .set('per_page', String(perPage))
+      .set('include_orbital', 'true');
+
+    if (filters.is_pha !== undefined) {
+      params = params.set('is_pha', String(filters.is_pha));
+    }
+    if (filters.nhats_accessible !== undefined) {
+      params = params.set('nhats_accessible', String(filters.nhats_accessible));
+    }
+    if (filters.spectral_type) {
+      params = params.set('spectral_type', filters.spectral_type);
+    }
+    if (filters.sort_by) {
+      params = params.set('sort_by', filters.sort_by);
+    }
+    if (filters.sort_dir) {
+      params = params.set('sort_dir', filters.sort_dir);
+    }
+
+    return this.http.get<PaginatedResponse<AsteroidWithOrbital>>(
       `${this.base}/asteroids`,
       { params },
     );

@@ -1,31 +1,36 @@
 # Phase 7 Handoff — Planetary Defense Watch
 
-*Written 2026-03-16 to brief the next Claude Code conversation.*
+*Updated 2026-03-16 — pre-Phase 7 bugs fixed; ready to start Phase 7.*
 
 ---
 
-## Known Bug — Fix This First
+## Pre-Phase 7 Bugs Fixed (do not re-fix these)
 
-**`/orbital-canvas` page: endless loading spinner despite "20 asteroids plotted" in header**
+### 1. OrbitalCanvasComponent — `sceneReady` never flipped to `true`
 
-- Header text shows correct count → data loaded fine, `loading.set(false)` was called
-- The spinner is from `OrbitalCanvasComponent`'s `sceneReady` signal — it never flips to `true`
-- `sceneReady` is set at the very end of `initScene()` via `this.zone.run(() => this.sceneReady.set(true))`; if anything throws before that line, signal stays `false` forever
+**Root causes (two separate issues):**
+- `afterNextRender(callback)` is deprecated in Angular 21 and doesn't guarantee `@ViewChild` is populated. Fixed by switching to `ngAfterViewInit` + `setTimeout(0)`.
+- WSL2 dev environment has no GPU driver → WebGL context creation fails entirely. Three.js throws, nothing catches it, `sceneReady` stays `false`.
 
-**Diagnose:**
-1. Open browser devtools **Console** tab when loading `/orbital-canvas` — look for JS/WebGL errors
-2. Wrap the body of `this.zone.runOutsideAngular(...)` in a try/catch and `console.error` any exception
-3. Verify `this.canvasHost?.nativeElement` is not `undefined` when `afterNextRender` fires
-4. Check whether `OrbitControls` import (`three/addons/controls/OrbitControls.js`) resolves correctly
+**Fix applied:**
+- `ngAfterViewInit` + `setTimeout(0)` replaces `afterNextRender` for scene init
+- `isWebGLAvailable()` probes before touching Three.js
+- Full Canvas 2D fallback renderer (`initScene2D`, `draw2D`) — draws stars, planet orbits, asteroid orbits, sun, markers using HTML Canvas 2D API
+- Zoom (wheel) + pan (drag) + click-to-select work in 2D mode
+- `canvas2dMode` signal tracks which renderer is active
+- `draw2D()` called both synchronously AND via `requestAnimationFrame` to survive ResizeObserver dimension resets
 
-**Secondary: performance** — page fires 20 individual `GET /api/asteroids/:id` requests to collect orbital elements. Should be replaced with a single call or the list endpoint extended to include orbital fields.
+### 2. Dossier — Resource Economics showed raw JSON
+
+`<pre>{{ resource_profile | json }}</pre>` placeholder replaced with a proper renderer: spectral class + key resources list + "Full economics analysis →" link. Two new computeds: `resourceKeyResources()` + `resourceSpectralClass()`.
 
 ---
 
 ## State of the Project Right Now
 
 - **146/146 tests passing** — run `npm run typecheck && npm run test` before touching anything
-- **Phases 0–6 complete, including all Phase 6 stretch goals**
+- **Phases 0–6 complete + pre-Phase 7 cleanup done**
+- **WebGL note:** WSL2 dev env has no WebGL → Canvas 2D fallback is used throughout development. The Three.js path is intact and will auto-activate in production. **Do not remove the fallback.**
 - **`three` + `@types/three` installed** — `@types/three` is required; three@0.183.x ships no .d.ts files
 
 ---
@@ -90,7 +95,7 @@ Full spec in `project-specs/roadmap/PHASE_7_PLANETARY_DEFENSE.md` (read this fir
 1. `shared/types.d.ts` — `RiskOutput`, `CloseApproach`, `MissionParams`
 2. `client/src/app/core/api.service.ts` — existing API methods; add any new ones here
 3. `client/src/app/app.routes.ts` — add `/defense`, `/defense/apophis` lazy routes
-4. `client/src/app/features/orbital-canvas/orbital-canvas.component.ts` — reuse for Apophis view
+4. `client/src/app/features/orbital-canvas/orbital-canvas.component.ts` — reuse for Apophis view; understand Canvas 2D fallback
 5. `server/src/routes/` — check existing routes before adding new ones
 6. `project-specs/roadmap/PHASE_7_PLANETARY_DEFENSE.md` — full spec
 
@@ -105,6 +110,7 @@ Full spec in `project-specs/roadmap/PHASE_7_PLANETARY_DEFENSE.md` (read this fir
 - All HTTP through `core/api.service.ts`
 - Lazy-load all feature routes
 - `@types/three` is installed and required — do NOT remove it
+- **Angular 21 DOM init pattern**: use `ngAfterViewInit` + `setTimeout(0)`, NOT `afterNextRender` — the latter is deprecated and doesn't guarantee ViewChild availability
 
 ---
 
@@ -112,6 +118,7 @@ Full spec in `project-specs/roadmap/PHASE_7_PLANETARY_DEFENSE.md` (read this fir
 
 - Do not run `git commit` or suggest co-author — commits are user-only, no exceptions
 - Do not remove `@types/three` — three@0.183.x ships no .d.ts files
+- Do not remove the Canvas 2D fallback from `OrbitalCanvasComponent` — dev env has no WebGL
 - Do not add NgRx, RxJS Subjects, or any state management library
 - Do not use `any` in TypeScript
 - Do not start Phase 8 (hardening/deployment) work
@@ -126,4 +133,4 @@ Full spec in `project-specs/roadmap/PHASE_7_PLANETARY_DEFENSE.md` (read this fir
 
 ---
 
-*Written: 2026-03-16 — Phase 6 fully complete (146 tests); ready for Phase 7.*
+*Updated: 2026-03-16 — pre-Phase 7 bugs fixed (Canvas 2D fallback, ngAfterViewInit, dossier economics render). 146 tests passing. Phase 7 ready to start.*

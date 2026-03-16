@@ -57,6 +57,9 @@ const LIST_COLUMNS = [
   'economic_tier', 'has_real_name', 'created_at', 'updated_at',
 ].join(', ');
 
+// Columns for orbital canvas: list columns + orbital elements
+const ORBITAL_COLUMNS = LIST_COLUMNS + ', semi_major_axis_au, eccentricity, inclination_deg, longitude_asc_node_deg, argument_perihelion_deg, mean_anomaly_deg';
+
 const _VALID_SORT_COLUMNS = [
   'name',
   'absolute_magnitude_h',
@@ -73,6 +76,7 @@ export interface AsteroidFilters {
   spectral_type?: string;
   sort_by?: SortColumn;
   sort_dir?: 'asc' | 'desc';
+  include_orbital?: boolean;
 }
 
 export async function listAsteroids(
@@ -80,9 +84,10 @@ export async function listAsteroids(
   perPage: number,
   filters: AsteroidFilters,
 ): Promise<PaginatedResponse<Partial<AsteroidRow>>> {
+  const columns = filters.include_orbital ? ORBITAL_COLUMNS : LIST_COLUMNS;
   let query = supabase
     .from('asteroids')
-    .select(LIST_COLUMNS, { count: 'exact' });
+    .select(columns, { count: 'exact' });
 
   if (filters.is_pha !== undefined) {
     query = query.eq('is_pha', filters.is_pha);

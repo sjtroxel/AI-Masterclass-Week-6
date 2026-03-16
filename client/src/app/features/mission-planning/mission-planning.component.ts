@@ -126,10 +126,11 @@ import { MissionPortfolioComponent } from './mission-portfolio.component.js';
               @for (p of prioritySliders; track p.key) {
                 <div>
                   <div class="flex items-center justify-between mb-1">
-                    <label class="text-[10px] text-space-400">{{ p.label }}</label>
+                    <label [for]="'priority-' + p.key" class="text-[10px] text-space-400">{{ p.label }}</label>
                     <span class="text-[10px] font-mono text-white">{{ priorities()[p.key] }}%</span>
                   </div>
                   <input
+                    [id]="'priority-' + p.key"
                     type="range"
                     min="0"
                     max="100"

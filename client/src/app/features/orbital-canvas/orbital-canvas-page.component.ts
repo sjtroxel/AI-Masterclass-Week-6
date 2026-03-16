@@ -7,10 +7,9 @@ import {
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { ApiService, type AsteroidDetail } from '../../core/api.service.js';
+import { ApiService, type AsteroidWithOrbital } from '../../core/api.service.js';
 import {
   OrbitalCanvasComponent,
-  asteroidDetailToOrbital,
   type OrbitalAsteroid,
 } from './orbital-canvas.component.js';
 
@@ -44,10 +43,10 @@ import {
             (asteroidSelected)="onAsteroidSelected($event)" />
         }
 
-        <!-- Legend note on mobile -->
-        <div class="md:hidden">
+        <!-- Legend note -->
+        <div>
           <p class="text-[10px] text-space-500">
-            Orbit colors: purple = Apollo · pink = Aten · emerald = Amor · blue = MBA
+            Orbit colors: purple = Apollo · pink = Aten · emerald = Amor · blue = MBA · green dot = current position
           </p>
         </div>
 
@@ -85,7 +84,7 @@ export class OrbitalCanvasPageComponent implements OnInit {
 
   readonly loading = signal(false);
   readonly loadError = signal<string | null>(null);
-  readonly details = signal<AsteroidDetail[]>([]);
+  readonly details = signal<AsteroidWithOrbital[]>([]);
   readonly selectedId = signal<string | null>(null);
 
   readonly orbitalAsteroids = computed<OrbitalAsteroid[]>(() =>
@@ -96,7 +95,28 @@ export class OrbitalCanvasPageComponent implements OnInit {
           d.eccentricity !== null &&
           d.inclination_deg !== null,
       )
-      .map(asteroidDetailToOrbital),
+      .map((d): OrbitalAsteroid => {
+        const a = d.semi_major_axis_au;
+        const orbitClass =
+          a === null ? 'Apollo' :
+          a < 1.0 ? 'Aten' :
+          a < 2.0 ? 'Apollo' :
+          a < 2.5 ? 'Amor' :
+          a < 4.2 ? 'MBA' : 'OMB';
+        return {
+          id: d.nasa_id,
+          name: d.name ?? d.designation ?? d.nasa_id,
+          orbitClass,
+          meanAnomalyDeg: d.mean_anomaly_deg,
+          elements: {
+            semiMajorAxis: d.semi_major_axis_au!,
+            eccentricity: d.eccentricity!,
+            inclination: d.inclination_deg!,
+            longitudeAscNode: d.longitude_asc_node_deg ?? 0,
+            argPerihelion: d.argument_perihelion_deg ?? 0,
+          },
+        };
+      }),
   );
 
   ngOnInit(): void {
@@ -114,40 +134,16 @@ export class OrbitalCanvasPageComponent implements OnInit {
 
   private loadAsteroids(): void {
     this.loading.set(true);
-    // Load first page of NHATS-accessible asteroids that have orbital elements
     this.api
-      .listAsteroids(1, 30, { nhats_accessible: true, sort_by: 'nhats_min_delta_v_kms', sort_dir: 'asc' })
+      .listAsteroidsWithOrbital(1, 20, {
+        nhats_accessible: true,
+        sort_by: 'nhats_min_delta_v_kms',
+        sort_dir: 'asc',
+      })
       .subscribe({
         next: (resp) => {
-          // Fetch full details for up to 20 asteroids to get orbital elements
-          const ids = resp.data.slice(0, 20).map((a) => a.nasa_id);
-          let loaded = 0;
-          const collected: AsteroidDetail[] = [];
-
-          if (ids.length === 0) {
-            this.loading.set(false);
-            return;
-          }
-
-          for (const id of ids) {
-            this.api.getAsteroid(id).subscribe({
-              next: (detail) => {
-                collected.push(detail);
-                loaded++;
-                if (loaded === ids.length) {
-                  this.details.set(collected);
-                  this.loading.set(false);
-                }
-              },
-              error: () => {
-                loaded++;
-                if (loaded === ids.length) {
-                  this.details.set(collected);
-                  this.loading.set(false);
-                }
-              },
-            });
-          }
+          this.details.set(resp.data);
+          this.loading.set(false);
         },
         error: (err: unknown) => {
           const e = err as { message?: string };

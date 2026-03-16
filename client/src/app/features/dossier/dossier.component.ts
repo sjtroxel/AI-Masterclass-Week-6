@@ -8,7 +8,6 @@ import {
   input,
 } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
-import { JsonPipe } from '@angular/common';
 import { ApiService, type AsteroidDetail } from '../../core/api.service';
 import {
   OrbitalCanvasComponent,
@@ -19,7 +18,7 @@ import {
 @Component({
   selector: 'app-dossier',
   standalone: true,
-  imports: [RouterLink, JsonPipe, OrbitalCanvasComponent],
+  imports: [RouterLink, OrbitalCanvasComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <!-- Empty state when accessed directly without an id -->
@@ -204,7 +203,7 @@ import {
                 Composition
               </h2>
               @if (asteroid()!.composition_summary) {
-                <p class="text-sm text-space-200 leading-relaxed">
+                <p class="text-xs text-space-200 leading-relaxed">
                   {{ asteroid()!.composition_summary }}
                 </p>
               } @else {
@@ -238,10 +237,30 @@ import {
                 </svg>
                 Resource Economics
               </h2>
-              @if (asteroid()!.resource_profile) {
-                <pre class="text-xs text-space-200 font-mono whitespace-pre-wrap">{{
-                  asteroid()!.resource_profile | json
-                }}</pre>
+              @if (resourceKeyResources().length > 0) {
+                <div class="space-y-3">
+                  @if (resourceSpectralClass()) {
+                    <div class="flex items-center justify-between">
+                      <span class="text-xs text-space-400">Spectral class</span>
+                      <span class="text-xs font-mono text-white font-semibold">
+                        {{ resourceSpectralClass() }}-type
+                      </span>
+                    </div>
+                  }
+                  <div class="space-y-2">
+                    @for (res of resourceKeyResources().slice(0, 3); track res.resource) {
+                      <div>
+                        <span class="text-xs text-stellar-400 font-medium">{{ res.resource }}</span>
+                        <p class="text-[11px] text-space-200 mt-0.5 leading-relaxed">{{ res.significance }}</p>
+                      </div>
+                    }
+                  </div>
+                  <a [routerLink]="['/analysis', id()]"
+                     class="text-xs text-stellar-400 hover:text-stellar-300 transition-colors
+                            min-h-[44px] flex items-center">
+                    Full economics analysis →
+                  </a>
+                </div>
               } @else {
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-3 py-2">
@@ -369,6 +388,25 @@ export class DossierComponent implements OnInit {
       ? 'text-safe-400 font-semibold'
       : 'text-space-400',
   );
+
+  readonly resourceKeyResources = computed<{ resource: string; significance: string }[]>(() => {
+    const profile = this.asteroid()?.resource_profile;
+    if (!profile) return [];
+    const raw = (profile as Record<string, unknown>)['keyResources'];
+    if (!Array.isArray(raw)) return [];
+    return raw.filter(
+      (r): r is { resource: string; significance: string } =>
+        typeof r === 'object' && r !== null && typeof (r as Record<string, unknown>)['resource'] === 'string',
+    );
+  });
+
+  readonly resourceSpectralClass = computed<string | null>(() => {
+    const profile = this.asteroid()?.resource_profile;
+    if (!profile) return null;
+    const sc = (profile as Record<string, unknown>)['spectralClass'];
+    if (typeof sc === 'string' && sc !== 'unknown') return sc;
+    return null;
+  });
 
   readonly orbitalFields = computed(() => {
     const a = this.asteroid();
