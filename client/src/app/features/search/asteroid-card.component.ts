@@ -8,7 +8,7 @@ import type { AsteroidListItem, AsteroidSearchResult } from '../../core/api.serv
   imports: [RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <a [routerLink]="['/dossier', asteroid().id]"
+    <a [routerLink]="['/dossier', asteroid().nasa_id]"
        class="group block bg-space-900 border border-space-700
               rounded-xl p-4 hover:border-nebula-500 hover:bg-space-800
               transition-all duration-150 min-h-[44px]">

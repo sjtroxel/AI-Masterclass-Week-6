@@ -35,7 +35,7 @@ import { MarkdownPipe } from '../../shared/pipes/markdown.pipe.js';
   imports: [RouterLink, MarkdownPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="flex flex-col h-screen md:h-[calc(100vh)] bg-space-950">
+    <div class="flex flex-col h-[calc(100vh-4rem)] md:h-screen bg-space-950">
 
       <!-- ── Header ─────────────────────────────────────────────────────── -->
       <header class="shrink-0 px-4 py-3 md:px-8 md:py-4
@@ -367,7 +367,7 @@ import { MarkdownPipe } from '../../shared/pipes/markdown.pipe.js';
                       (input)="onInput($event)"
                       (keydown)="onKeydown($event)"
                       [disabled]="svc.isStreaming() || svc.sessionExpired()"
-                      placeholder="Ask about asteroid science, composition, or 2050 economics…"
+                      placeholder="Ask about asteroid science, etc.!"
                       rows="1"
                       class="flex-1 px-4 py-3 bg-space-900 border border-space-700
                              hover:border-space-600 focus:border-nebula-500

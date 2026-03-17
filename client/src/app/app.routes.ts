@@ -29,8 +29,11 @@ export const routes: Routes = [
   },
   {
     path: 'analysis',
-    redirectTo: '/search',
     pathMatch: 'full',
+    redirectTo: () => {
+      const id = localStorage.getItem('lastDossierId');
+      return id ? `/analysis/${id}` : '/search';
+    },
   },
   {
     path: 'analyst',

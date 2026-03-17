@@ -436,7 +436,12 @@ export class DossierComponent implements OnInit {
 
   ngOnInit(): void {
     const id = this.id();
-    if (id) this.loadAsteroid(id);
+    if (id) {
+      this.loadAsteroid(id);
+    } else {
+      const last = localStorage.getItem('lastDossierId');
+      if (last) void this.router.navigate(['/dossier', last], { replaceUrl: true });
+    }
   }
 
   openAnalyst(): void {
@@ -458,6 +463,7 @@ export class DossierComponent implements OnInit {
       next: (data) => {
         this.asteroid.set(data);
         this.isLoading.set(false);
+        localStorage.setItem('lastDossierId', data.nasa_id);
       },
       error: (err: unknown) => {
         this.error.set(err instanceof Error ? err.message : 'Failed to load asteroid');

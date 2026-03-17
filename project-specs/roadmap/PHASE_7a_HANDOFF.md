@@ -4,6 +4,50 @@
 
 ---
 
+## Pre-Phase 7 Polish Done 2026-03-17 (do not re-fix these)
+
+### 3. CI lint failures fixed
+
+Three lint errors that were failing GitHub Actions:
+- `mission-planning.component.ts` line 129: `<label>` had no `for` attribute — fixed with `[for]="'priority-' + p.key"` and matching `[id]` on the input
+- `dossier.component.ts`: `Array<T>` type syntax → `T[]`
+- `orbital-canvas.component.ts`: two `Array<T>` usages → `T[]`
+
+### 4. Rate limiter — dev bypass + prod raised
+
+- `server/src/app.ts`: rate limiter now skipped when `NODE_ENV=development` (orbital canvas alone fires 20+ requests on load)
+- `server/package.json` dev script: `NODE_ENV=development tsx watch src/server.ts`
+- Production limit raised from 100 → 500 requests/15 min per IP
+
+### 5. Orbital canvas: 20→1 request
+
+`orbital-canvas-page.component.ts` previously fetched 1 list + 20 individual detail endpoints to get orbital elements. Fixed:
+- New `ORBITAL_COLUMNS` in `asteroidService.ts` — includes orbital element fields when `include_orbital=true`
+- New `listAsteroidsWithOrbital()` in `api.service.ts` + `AsteroidWithOrbital` type
+- Page now makes **1 request** total; inline `OrbitalAsteroid` mapping replaces the fan-out
+
+### 6. Orbital canvas: popup modal + planets/Sun clickable
+
+- Click any asteroid marker (perihelion dot OR green current-position dot) → small popup with name + "View dossier →" link + ✕ close
+- Planets (Mercury/Venus/Earth/Mars) and Sun now registered as hit targets — popup shows name + ✕, no dossier link
+- `hasDossier: boolean` flag on every marker controls whether the link renders
+- Works in both Canvas 2D and Three.js modes
+- Orbit colour legend now visible on all screen sizes (was mobile-only); "green dot = current position" added
+
+### 7. Routing fixes
+
+- `asteroid-card.component.ts`: navigates to `/dossier/nasa_id` (was UUID). UUID caused 404s on `/api/analysis/:id/latest` because the analyses table stores `asteroid_id` as `nasa_id`.
+- `dossier.component.ts`: on success stores `data.nasa_id` (not raw route param) to `localStorage` as `lastDossierId`
+- `dossier.component.ts` `ngOnInit`: if no route param, reads `lastDossierId` from localStorage and redirects (`replaceUrl: true`) — dossier persists across bottom-nav taps
+- `app.routes.ts` `/analysis` route: functional `redirectTo` → `/analysis/:lastDossierId` if available, else `/search`
+- Analysis bottom nav now navigates correctly to the last-viewed asteroid's analysis
+
+### 8. Analyst chat mobile layout
+
+`analyst-chat.component.ts` outer container: `h-[calc(100vh-4rem)] md:h-screen` — input bar no longer covered by the fixed bottom nav (which is `h-16` = `4rem`).
+
+---
+
 ## Pre-Phase 7 Bugs Fixed (do not re-fix these)
 
 ### 1. OrbitalCanvasComponent — `sceneReady` never flipped to `true`
@@ -133,4 +177,4 @@ Full spec in `project-specs/roadmap/PHASE_7_PLANETARY_DEFENSE.md` (read this fir
 
 ---
 
-*Updated: 2026-03-16 — pre-Phase 7 bugs fixed (Canvas 2D fallback, ngAfterViewInit, dossier economics render). 146 tests passing. Phase 7 ready to start.*
+*Updated: 2026-03-17 — pre-Phase 7 polish complete (CI fixed, rate limiter, orbital canvas 20→1 request + popup modal, routing UUID→nasa_id, dossier persistence, analyst chat mobile layout). 132 server + 14 client Vitest tests passing (146 total). Phase 7 ready to start.*
