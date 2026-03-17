@@ -58,10 +58,20 @@ export const routes: Routes = [
         (m) => m.OrbitalCanvasPageComponent,
       ),
   },
+  // Phase 7 — Planetary Defense Watch
   {
     path: 'defense',
     loadComponent: () =>
-      import('./features/search/search.component').then((m) => m.SearchComponent),
+      import('./features/defense-watch/defense-watch.component').then(
+        (m) => m.DefenseWatchComponent,
+      ),
+  },
+  {
+    path: 'defense/apophis',
+    loadComponent: () =>
+      import('./features/defense-watch/apophis-feature.component').then(
+        (m) => m.ApophisFeatureComponent,
+      ),
   },
   {
     path: '**',

@@ -357,6 +357,63 @@ export interface PortfolioResponse {
   rankedAt: string;
 }
 
+// ── Planetary Defense ─────────────────────────────────────────────────────────
+
+/** A PHA as returned by GET /api/defense/pha */
+export interface PhaListItem {
+  nasa_id: string;
+  name: string | null;
+  full_name: string | null;
+  is_sentry_object: boolean;
+  diameter_min_km: number | null;
+  diameter_max_km: number | null;
+  absolute_magnitude_h: number | null;
+  min_orbit_intersection_au: number | null;
+  next_approach_date: string | null;
+  next_approach_miss_km: number | null;
+  closest_approach_date: string | null;
+  closest_approach_au: number | null;
+  /** Present if an analysis exists for this asteroid */
+  hazard_rating: RiskOutput['planetaryDefense']['hazardRating'] | null;
+}
+
+/** A single upcoming close approach entry returned by GET /api/defense/upcoming */
+export interface UpcomingApproach {
+  nasa_id: string;
+  name: string | null;
+  full_name: string | null;
+  is_pha: boolean;
+  is_sentry_object: boolean;
+  diameter_min_km: number | null;
+  diameter_max_km: number | null;
+  next_approach_date: string;
+  next_approach_miss_km: number | null;
+}
+
+/** Full Apophis record returned by GET /api/defense/apophis */
+export interface ApophisDetail {
+  nasa_id: string;
+  name: string | null;
+  full_name: string | null;
+  is_pha: boolean;
+  is_sentry_object: boolean;
+  diameter_min_km: number | null;
+  diameter_max_km: number | null;
+  absolute_magnitude_h: number | null;
+  spectral_type_smass: string | null;
+  min_orbit_intersection_au: number | null;
+  semi_major_axis_au: number | null;
+  eccentricity: number | null;
+  inclination_deg: number | null;
+  orbital_period_yr: number | null;
+  nhats_accessible: boolean | null;
+  nhats_min_delta_v_kms: number | null;
+  next_approach_date: string | null;
+  next_approach_miss_km: number | null;
+  closest_approach_date: string | null;
+  closest_approach_au: number | null;
+}
+
 // ── Analysis persistence (analyses table) ─────────────────────────────────────
 
 export type AnalysisStatus = 'pending' | 'running' | 'complete' | 'handoff' | 'error';

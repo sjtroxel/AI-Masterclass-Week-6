@@ -99,6 +99,14 @@ export async function listAsteroids(
     query = query.eq('spectral_type_smass', filters.spectral_type);
   }
 
+  // When sorting by next approach date, exclude asteroids whose approach has
+  // already passed. Use yesterday as the cutoff (not today) to be robust against
+  // server clock drift — a same-day approach is still relevant.
+  if (filters.sort_by === 'next_approach_date') {
+    const yesterday = new Date(Date.now() - 86_400_000).toISOString().split('T')[0]!;
+    query = query.gt('next_approach_date', yesterday);
+  }
+
   const from = (page - 1) * perPage;
   const to = from + perPage - 1;
 

@@ -9,6 +9,7 @@ import asteroidsRouter from './routes/asteroids.js';
 import analystRouter from './routes/analyst.js';
 import analysisRouter from './routes/analysis.js';
 import planningRouter from './routes/planning.js';
+import defenseRouter from './routes/defense.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
@@ -49,6 +50,7 @@ app.use('/api/asteroids', asteroidsRouter);
 app.use('/api/analyst', analystRouter);
 app.use('/api/analysis', analysisRouter);
 app.use('/api/planning', planningRouter);
+app.use('/api/defense', defenseRouter);
 
 // ── Error handler (must be last) ─────────────────────────────────────────────
 app.use(errorHandler);

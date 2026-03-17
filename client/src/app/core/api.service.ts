@@ -204,6 +204,70 @@ export interface AnalysisResponse {
   errors: { agent: string; message: string; code: string }[];
 }
 
+// ── Planetary Defense types ────────────────────────────────────────────────────
+
+export type HazardRating = 'none' | 'negligible' | 'low' | 'moderate' | 'elevated' | 'high';
+
+export interface PhaListItem {
+  nasa_id: string;
+  name: string | null;
+  full_name: string | null;
+  is_sentry_object: boolean;
+  diameter_min_km: number | null;
+  diameter_max_km: number | null;
+  absolute_magnitude_h: number | null;
+  min_orbit_intersection_au: number | null;
+  next_approach_date: string | null;
+  next_approach_miss_km: number | null;
+  closest_approach_date: string | null;
+  closest_approach_au: number | null;
+  hazard_rating: HazardRating | null;
+}
+
+export interface UpcomingApproach {
+  nasa_id: string;
+  name: string | null;
+  full_name: string | null;
+  is_pha: boolean;
+  is_sentry_object: boolean;
+  diameter_min_km: number | null;
+  diameter_max_km: number | null;
+  next_approach_date: string;
+  next_approach_miss_km: number | null;
+}
+
+export interface DefenseListResponse<T> {
+  data: T[];
+  total: number;
+}
+
+export interface UpcomingResponse extends DefenseListResponse<UpcomingApproach> {
+  days: number;
+}
+
+export interface ApophisDetail {
+  nasa_id: string;
+  name: string | null;
+  full_name: string | null;
+  is_pha: boolean;
+  is_sentry_object: boolean;
+  diameter_min_km: number | null;
+  diameter_max_km: number | null;
+  absolute_magnitude_h: number | null;
+  spectral_type_smass: string | null;
+  min_orbit_intersection_au: number | null;
+  semi_major_axis_au: number | null;
+  eccentricity: number | null;
+  inclination_deg: number | null;
+  orbital_period_yr: number | null;
+  nhats_accessible: boolean | null;
+  nhats_min_delta_v_kms: number | null;
+  next_approach_date: string | null;
+  next_approach_miss_km: number | null;
+  closest_approach_date: string | null;
+  closest_approach_au: number | null;
+}
+
 // ── Mission planning types ─────────────────────────────────────────────────────
 
 export interface MissionConstraints {
@@ -400,5 +464,20 @@ export class ApiService {
       constraints,
       ...(portfolioSize !== undefined && { portfolioSize }),
     });
+  }
+
+  // ── Planetary Defense ───────────────────────────────────────────────────────
+
+  getPhaList(): Observable<DefenseListResponse<PhaListItem>> {
+    return this.http.get<DefenseListResponse<PhaListItem>>(`${this.base}/defense/pha`);
+  }
+
+  getUpcomingApproaches(days = 365): Observable<UpcomingResponse> {
+    const params = new HttpParams().set('days', String(days));
+    return this.http.get<UpcomingResponse>(`${this.base}/defense/upcoming`, { params });
+  }
+
+  getApophis(): Observable<ApophisDetail> {
+    return this.http.get<ApophisDetail>(`${this.base}/defense/apophis`);
   }
 }

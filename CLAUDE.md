@@ -166,7 +166,7 @@ The AI Analyst is architecturally constrained to these indices. It cannot use mo
 | 4 | AI Analyst | Complete ✓ |
 | 5 | Agent Swarm | Complete ✓ |
 | 6 | Mission Planning | Complete ✓ |
-| 7 | Planetary Defense | **Next** |
+| 7 | Planetary Defense | **In Progress** |
 | 8 | Hardening & Deployment | Not started |
 
 Full roadmap: `project-specs/ROADMAP.md`
@@ -191,4 +191,4 @@ Current phase details: `project-specs/roadmap/PHASE_7_PLANETARY_DEFENSE.md`
 - Three.js orbital viz is Phase 6 scope, not earlier; `@types/three` IS required (three@0.183.x ships no .d.ts)
 - Apophis 2029 is a hand-crafted featured case study in Phase 7
 
-*Last updated: 2026-03-17 — Phase 6 complete ✓; pre-Phase 7 polish complete ✓. 146 tests passing (132 server + 14 client Vitest). Key polish shipped: CI lint fixed; rate limiter dev-bypass + prod 500/15min; orbital canvas 20→1 request (`include_orbital` endpoint + `listAsteroidsWithOrbital`); orbital canvas popup modal (asteroids + planets + Sun); routing UUID→nasa_id throughout; dossier `lastDossierId` localStorage persistence; analyst chat mobile input fix. Phase 7 (Planetary Defense) is next — see `project-specs/roadmap/PHASE_7a_HANDOFF.md`.*
+*Last updated: 2026-03-17 — Phase 7 in progress (Steps 1–4 + 6 complete ✓). 158 tests passing (144 server + 14 client Vitest). Phase 7 shipped so far: 3 defense API endpoints (`/api/defense/pha|upcoming|apophis`); shared types `PhaListItem/UpcomingApproach/ApophisDetail`; Defense Watch dashboard (`/defense`) with PHA list + upcoming approaches + 30/90/365-day filter; Apophis 2029 feature page (`/defense/apophis`) with hand-crafted editorial, live countdown, orbital canvas, physical profile; nav wiring (bottom nav "Defense" replaces "Plan"; sidebar "Defense Watch" added); stale past-approach-date fix for search sort + upcoming filter. Remaining: Step 5 (timeline component) + Step 7 (client unit tests). See `project-specs/roadmap/PHASE_7_PLANETARY_DEFENSE.md`.*
