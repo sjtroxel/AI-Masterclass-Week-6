@@ -198,4 +198,66 @@ describe('runNavigator', () => {
       'ANTHROPIC_API_KEY',
     );
   });
+
+  it('handles fetch_close_approaches tool call with a next approach', async () => {
+    mockFetchCAD.mockResolvedValue({
+      designation: '2015 XC',
+      nextApproach: { date: '2027-03-15', distanceAu: 0.025, distanceKm: 3_740_000 },
+      closestApproach: null,
+    });
+    // Turn 1: model calls fetch_close_approaches
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'tool_use', id: 'call_1', name: 'fetch_close_approaches', input: { designation: '2015 XC' } }],
+      stop_reason: 'tool_use',
+    });
+    // Turn 2: model submits
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'tool_use', id: 'call_2', name: 'submit_navigator_analysis', input: navFixture }],
+      stop_reason: 'tool_use',
+    });
+
+    const { output } = await runNavigator(mockAsteroid, {} as never, {});
+
+    expect(mockFetchCAD).toHaveBeenCalledWith({ designation: '2015 XC' });
+    expect(output.accessibilityRating).toBe('good');
+  });
+
+  it('handles fetch_close_approaches returning no next approach', async () => {
+    mockFetchCAD.mockResolvedValue({
+      designation: '2015 XC',
+      nextApproach: null,
+      closestApproach: null,
+    });
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'tool_use', id: 'call_1', name: 'fetch_close_approaches', input: { designation: '2015 XC' } }],
+      stop_reason: 'tool_use',
+    });
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'tool_use', id: 'call_2', name: 'submit_navigator_analysis', input: navFixture }],
+      stop_reason: 'tool_use',
+    });
+
+    const { output } = await runNavigator(mockAsteroid, {} as never, {});
+
+    expect(output.accessibilityRating).toBe('good');
+  });
+
+  it('handles an unknown tool call gracefully and continues the loop', async () => {
+    // Turn 1: model calls an unknown tool → dispatchTool throws; loop continues
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'tool_use', id: 'call_1', name: 'bad_tool', input: {} }],
+      stop_reason: 'tool_use',
+    });
+    // Turn 2: model submits after receiving the error result
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'tool_use', id: 'call_2', name: 'submit_navigator_analysis', input: navFixture }],
+      stop_reason: 'tool_use',
+    });
+
+    const { output } = await runNavigator(mockAsteroid, {} as never, {});
+
+    // Despite the bad tool call, the orchestration recovered and got a valid output
+    expect(output.accessibilityRating).toBe('good');
+    expect(mockCreate).toHaveBeenCalledTimes(2);
+  });
 });

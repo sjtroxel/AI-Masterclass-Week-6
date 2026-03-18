@@ -2,14 +2,28 @@
 
 **Goal**: Full test coverage, accessibility, performance tuning, and final production deployment.
 
-**Status**: Not started
+**Status**: In progress
 
 ---
 
 ## Deliverables
 
 ### Test Coverage
-- [ ] Server unit + integration tests: ≥ 90% statement coverage
+- [x] Server unit + integration tests: ≥ 90% statement coverage — **93.95% achieved** (2026-03-18)
+  - Installed `@vitest/coverage-v8@3.2.4`
+  - Added `searchService.test.ts` → 100% coverage on `searchService` and `voyageService`
+  - Added `tools.test.ts` → 100% coverage on all four agent tool functions
+  - Added `search.test.ts` integration → covers `/api/asteroids/search`, all filter branches, errorHandler non-AppError path
+  - Extended `defense.test.ts` → covers `DatabaseError` on analyses query and missing `planetaryDefense` path
+  - 18 test files, 194 tests, all passing
+- [x] Server unit + integration tests: agent error branches fully covered — **96.61% overall** (2026-03-18)
+  - Extended `navigator.test.ts` → covers `fetch_close_approaches` dispatch, unknown tool catch, no-nextApproach branch
+  - Extended `riskAssessor.test.ts` → covers `query_science_index` dispatch, unknown tool catch, tool throw recovery
+  - Extended `economist.test.ts` → covers `query_science_index` dispatch, unknown tool catch, tool throw recovery, missing navigatorOutput message
+  - Extended `geologist.test.ts` → covers tool throw recovery
+  - Extended `orchestrator.test.ts` → covers riskAssessor failure catch, partial agent set (lines 147/150), synthesis no-text-block fallback, economist failure catch
+  - 18 test files, 209 tests, all passing
+  - Remaining uncovered lines are genuinely unreachable defensive branches (navigator `summarizeToolResult` fallback, db client config)
 - [ ] Client tests: ≥ 80% statement coverage
 - [ ] All Playwright E2E scenarios passing — at both mobile (375px) and desktop (1280px) viewports
 - [ ] E2E scenario list (verify all pass):

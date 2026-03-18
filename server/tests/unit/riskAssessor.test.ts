@@ -216,4 +216,66 @@ describe('runRiskAssessor', () => {
       'Risk Assessor agent did not call submit_risk_analysis within turn limit',
     );
   });
+
+  it('handles query_science_index tool call then submit', async () => {
+    mockQueryScience.mockResolvedValue({
+      result: { chunks: [{ sourceId: 'cneos', sourceTitle: 'Apophis Assessment', sourceYear: 2021, content: 'test', similarity: 0.9 }] },
+      rawChunks: [scienceChunk],
+    });
+    // Turn 1: model queries science index
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'tool_use', id: 'call_1', name: 'query_science_index', input: { query: 'Apophis impact probability' } }],
+      stop_reason: 'tool_use',
+    });
+    // Turn 2: model submits
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'tool_use', id: 'call_2', name: 'submit_risk_analysis', input: riskFixture }],
+      stop_reason: 'tool_use',
+    });
+
+    const { output, trace } = await runRiskAssessor(mockAsteroid, {} as never, {});
+
+    expect(mockQueryScience).toHaveBeenCalledWith({ query: 'Apophis impact probability' });
+    expect(output.planetaryDefense.hazardRating).toBe('low');
+    const eventTypes = trace.events.map((e) => e.type);
+    expect(eventTypes).toContain('rag_lookup');
+  });
+
+  it('handles an unknown tool call and continues the loop', async () => {
+    // Turn 1: model calls an unknown tool → catch block captures error; loop continues
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'tool_use', id: 'call_1', name: 'bad_tool', input: {} }],
+      stop_reason: 'tool_use',
+    });
+    // Turn 2: model submits
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'tool_use', id: 'call_2', name: 'submit_risk_analysis', input: riskFixture }],
+      stop_reason: 'tool_use',
+    });
+
+    const { output } = await runRiskAssessor(mockAsteroid, {} as never, {});
+
+    expect(output.dataCompleteness).toBe(0.85);
+    expect(mockCreate).toHaveBeenCalledTimes(2);
+  });
+
+  it('handles a tool that throws an error and continues the loop', async () => {
+    mockFetchCAD.mockRejectedValue(new Error('JPL CAD API timeout'));
+
+    // Turn 1: model calls fetch_close_approaches → tool throws; error result sent back
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'tool_use', id: 'call_1', name: 'fetch_close_approaches', input: { designation: '99942 Apophis' } }],
+      stop_reason: 'tool_use',
+    });
+    // Turn 2: model submits despite the tool failure
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'tool_use', id: 'call_2', name: 'submit_risk_analysis', input: riskFixture }],
+      stop_reason: 'tool_use',
+    });
+
+    const { output } = await runRiskAssessor(mockAsteroid, {} as never, {});
+
+    expect(output.dataCompleteness).toBe(0.85);
+    expect(mockCreate).toHaveBeenCalledTimes(2);
+  });
 });

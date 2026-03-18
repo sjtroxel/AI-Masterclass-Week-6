@@ -267,4 +267,74 @@ describe('runEconomist', () => {
       'Economist agent did not call submit_economist_analysis within turn limit',
     );
   });
+
+  it('includes "not available" in user message when navigatorOutput is absent', async () => {
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'tool_use', id: 'call_1', name: 'submit_economist_analysis', input: econFixture }],
+      stop_reason: 'tool_use',
+    });
+
+    await runEconomist(mockAsteroid, makeState({ navigatorOutput: undefined }), {});
+
+    const firstCall = mockCreate.mock.calls[0];
+    const messages = firstCall?.[0]?.messages as Array<{ role: string; content: string }>;
+    const userMessage = messages.find((m) => m.role === 'user')?.content ?? '';
+    expect(userMessage).toContain('not available');
+  });
+
+  it('handles query_science_index tool call then submit', async () => {
+    mockQueryScience.mockResolvedValue({
+      result: { chunks: [{ sourceId: 'src-1', sourceTitle: 'Resource Report', sourceYear: 2022, content: 'test', similarity: 0.85 }] },
+      rawChunks: [{ ...scenarioChunk, source_type: 'science' as const }],
+    });
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'tool_use', id: 'call_1', name: 'query_science_index', input: { query: 'PGM composition C-type' } }],
+      stop_reason: 'tool_use',
+    });
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'tool_use', id: 'call_2', name: 'submit_economist_analysis', input: econFixture }],
+      stop_reason: 'tool_use',
+    });
+
+    const { output } = await runEconomist(mockAsteroid, makeState(), {});
+
+    expect(mockQueryScience).toHaveBeenCalledWith({ query: 'PGM composition C-type' });
+    expect(output.missionROI).toBe('positive');
+  });
+
+  it('handles an unknown tool call gracefully and continues the loop', async () => {
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'tool_use', id: 'call_1', name: 'bad_tool', input: {} }],
+      stop_reason: 'tool_use',
+    });
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'tool_use', id: 'call_2', name: 'submit_economist_analysis', input: econFixture }],
+      stop_reason: 'tool_use',
+    });
+
+    const { output } = await runEconomist(mockAsteroid, makeState(), {});
+
+    expect(output.missionROI).toBe('positive');
+    expect(mockCreate).toHaveBeenCalledTimes(2);
+  });
+
+  it('handles a tool that throws an error and continues the loop', async () => {
+    mockQueryScenario.mockRejectedValue(new Error('RAG index offline'));
+
+    // Turn 1: model calls query_scenario_index → tool throws; error result sent back
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'tool_use', id: 'call_1', name: 'query_scenario_index', input: { query: 'PGM market 2050' } }],
+      stop_reason: 'tool_use',
+    });
+    // Turn 2: model submits despite the tool failure
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'tool_use', id: 'call_2', name: 'submit_economist_analysis', input: econFixture }],
+      stop_reason: 'tool_use',
+    });
+
+    const { output } = await runEconomist(mockAsteroid, makeState(), {});
+
+    expect(output.missionROI).toBe('positive');
+    expect(mockCreate).toHaveBeenCalledTimes(2);
+  });
 });

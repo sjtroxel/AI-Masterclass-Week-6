@@ -301,4 +301,29 @@ describe('GET /api/defense/risk/:nasaId', () => {
     const res = await request(app).get('/api/defense/risk/2099942');
     expect(res.status).toBe(500);
   });
+
+  it('returns 500 on non-PGRST116 database error fetching the analysis', async () => {
+    vi.mocked(supabase.from)
+      .mockReturnValueOnce(mockChain({ data: APOPHIS_FULL_ROW, error: null }) as never)
+      .mockReturnValueOnce(
+        mockChain({ data: null, error: { code: 'OTHER', message: 'analyses table down' } }) as never,
+      );
+
+    const res = await request(app).get('/api/defense/risk/2099942');
+    expect(res.status).toBe(500);
+  });
+
+  it('returns 404 when analysis row exists but risk_output has no planetaryDefense', async () => {
+    const incompleteRow = {
+      ...RISK_ANALYSIS_ROW,
+      risk_output: { missionRisk: {}, dataCompleteness: 0.1 },
+    };
+
+    vi.mocked(supabase.from)
+      .mockReturnValueOnce(mockChain({ data: APOPHIS_FULL_ROW, error: null }) as never)
+      .mockReturnValueOnce(mockChain({ data: incompleteRow, error: null }) as never);
+
+    const res = await request(app).get('/api/defense/risk/2099942');
+    expect(res.status).toBe(404);
+  });
 });

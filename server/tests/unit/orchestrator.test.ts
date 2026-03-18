@@ -410,6 +410,62 @@ describe('runOrchestrator — parallel dispatch', () => {
   });
 });
 
+describe('runOrchestrator — risk assessor error recovery', () => {
+  it('continues when risk assessor fails and records the error', async () => {
+    mockRunNavigator.mockResolvedValue({
+      output: makeNavOutput(0.8),
+      trace: { ...mockTrace, agent: 'navigator' },
+    });
+    mockRunGeologist.mockResolvedValue({
+      output: makeGeoOutput(0.8),
+      trace: { ...mockTrace, agent: 'geologist' },
+    });
+    // Risk Assessor fails
+    mockRunRiskAssessor.mockRejectedValue(new Error('Risk assessor timed out'));
+    mockRunEconomist.mockResolvedValue({
+      output: makeEconOutput(0.7),
+      trace: { ...mockTrace, agent: 'economist' },
+    });
+
+    const { state } = await runOrchestrator(mockAsteroid.id, {});
+
+    expect(state.errors.some((e) => e.agent === 'riskAssessor')).toBe(true);
+    const riskError = state.errors.find((e) => e.agent === 'riskAssessor');
+    expect(riskError?.code).toBe('AGENT_ERROR');
+    expect(riskError?.recoverable).toBe(true);
+    expect(state.riskOutput).toBeUndefined();
+    // Other agents still ran
+    expect(state.navigatorOutput).toBeDefined();
+    expect(state.geologistOutput).toBeDefined();
+  });
+});
+
+describe('runOrchestrator — partial agent set', () => {
+  it('skips geologist and riskAssessor when not in requestedAgents', async () => {
+    mockRunNavigator.mockResolvedValue({
+      output: makeNavOutput(0.8),
+      trace: { ...mockTrace, agent: 'navigator' },
+    });
+    mockRunEconomist.mockResolvedValue({
+      output: makeEconOutput(0.7),
+      trace: { ...mockTrace, agent: 'economist' },
+    });
+
+    mockCreate.mockResolvedValue({
+      content: [{ type: 'text', text: 'Navigator-only synthesis.' }],
+      stop_reason: 'end_turn',
+    });
+
+    const { state } = await runOrchestrator(mockAsteroid.id, {}, ['navigator', 'economist']);
+
+    expect(mockRunGeologist).not.toHaveBeenCalled();
+    expect(mockRunRiskAssessor).not.toHaveBeenCalled();
+    expect(state.navigatorOutput).toBeDefined();
+    expect(state.geologistOutput).toBeUndefined();
+    expect(state.riskOutput).toBeUndefined();
+  });
+});
+
 describe('runOrchestrator — agent error recovery', () => {
   it('continues when one agent fails, errors array is populated', async () => {
     mockRunNavigator.mockResolvedValue({
@@ -463,6 +519,50 @@ describe('runOrchestrator — agent error recovery', () => {
     expect(navError?.recoverable).toBe(true);
     expect(navError?.code).toBe('AGENT_ERROR');
     expect(typeof navError?.message).toBe('string');
+  });
+});
+
+describe('runOrchestrator — economist error recovery', () => {
+  it('continues when economist fails, records error, and triggers handoff due to missing output', async () => {
+    mockRunNavigator.mockResolvedValue({
+      output: makeNavOutput(0.8),
+      trace: { ...mockTrace, agent: 'navigator' },
+    });
+    mockRunGeologist.mockResolvedValue({
+      output: makeGeoOutput(0.8),
+      trace: { ...mockTrace, agent: 'geologist' },
+    });
+    mockRunRiskAssessor.mockResolvedValue({
+      output: makeRiskOutput(0.8),
+      trace: { ...mockTrace, agent: 'riskAssessor' },
+    });
+    // Economist fails
+    mockRunEconomist.mockRejectedValue(new Error('Economist timed out'));
+
+    const { state } = await runOrchestrator(mockAsteroid.id, {});
+
+    expect(state.errors.some((e) => e.agent === 'economist')).toBe(true);
+    const econError = state.errors.find((e) => e.agent === 'economist');
+    expect(econError?.recoverable).toBe(true);
+    expect(econError?.code).toBe('AGENT_ERROR');
+    expect(state.economistOutput).toBeUndefined();
+  });
+});
+
+describe('runOrchestrator — synthesis edge cases', () => {
+  it('falls back to handoff when synthesis response has no text block', async () => {
+    setupAgentMocks(1.0, 1.0, 1.0, 1.0);
+
+    // Resolved successfully but no text content block in response
+    mockCreate.mockResolvedValue({
+      content: [{ type: 'tool_use', id: 'call_1', name: 'some_tool', input: {} }],
+      stop_reason: 'tool_use',
+    });
+
+    const { state } = await runOrchestrator(mockAsteroid.id, {});
+
+    expect(state.handoffTriggered).toBe(true);
+    expect(state.handoffPacket?.triggeredBy).toBe('agent_failure');
   });
 });
 

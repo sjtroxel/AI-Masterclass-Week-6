@@ -210,4 +210,24 @@ describe('runGeologist', () => {
       'Geologist agent did not call submit_geologist_analysis within turn limit',
     );
   });
+
+  it('handles a tool that throws an error and continues the loop', async () => {
+    mockQueryScience.mockRejectedValue(new Error('pgvector connection lost'));
+
+    // Turn 1: model calls query_science_index → tool throws; error result sent back
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'tool_use', id: 'call_1', name: 'query_science_index', input: { query: 'B-type composition' } }],
+      stop_reason: 'tool_use',
+    });
+    // Turn 2: model submits despite the tool failure
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'tool_use', id: 'call_2', name: 'submit_geologist_analysis', input: geoFixture }],
+      stop_reason: 'tool_use',
+    });
+
+    const { output } = await runGeologist(mockAsteroid, {} as never, {});
+
+    expect(output.spectralClass).toBe('B');
+    expect(mockCreate).toHaveBeenCalledTimes(2);
+  });
 });
