@@ -20,8 +20,19 @@ import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import { runOrchestrator } from '../services/orchestrator/orchestrator.js';
 import { supabase } from '../db/supabase.js';
+import { getAsteroidByNasaId, getAsteroidById } from '../services/asteroidService.js';
 import { ValidationError, DatabaseError, NotFoundError } from '../errors/AppError.js';
 import type { MissionParams, AgentType } from '../../../shared/types.js';
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Resolve a nasa_id or UUID string to the asteroid's UUID primary key. */
+async function resolveAsteroidUuid(id: string): Promise<string> {
+  const asteroid = UUID_RE.test(id)
+    ? await getAsteroidById(id)
+    : await getAsteroidByNasaId(id);
+  return asteroid.id;
+}
 
 const router = Router();
 
@@ -29,8 +40,9 @@ const router = Router();
 
 router.post('/:asteroidId', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { asteroidId } = req.params as { asteroidId: string };
-    if (!asteroidId) throw new ValidationError('asteroidId is required');
+    const { asteroidId: rawId } = req.params as { asteroidId: string };
+    if (!rawId) throw new ValidationError('asteroidId is required');
+    const asteroidId = await resolveAsteroidUuid(rawId);
 
     // Parse optional mission params from request body
     const body = req.body as {
@@ -89,7 +101,8 @@ router.post('/:asteroidId', async (req: Request, res: Response, next: NextFuncti
 
 router.get('/:asteroidId/latest', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { asteroidId } = req.params as { asteroidId: string };
+    const { asteroidId: rawId } = req.params as { asteroidId: string };
+    const asteroidId = await resolveAsteroidUuid(rawId);
 
     const { data, error } = await supabase
       .from('analyses')

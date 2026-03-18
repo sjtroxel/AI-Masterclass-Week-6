@@ -8,7 +8,7 @@ import {
   input,
 } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
-import { ApiService, type AsteroidDetail, type DefenseRiskResponse } from '../../core/api.service';
+import { ApiService, type AsteroidDetail, type DefenseRiskResponse, type AnalysisResponse } from '../../core/api.service';
 import {
   ApproachTimelineComponent,
   type TimelineApproach,
@@ -206,9 +206,9 @@ import {
                 </svg>
                 Composition
               </h2>
-              @if (asteroid()!.composition_summary) {
+              @if (compositionSummary()) {
                 <p class="text-xs text-space-200 leading-relaxed">
-                  {{ asteroid()!.composition_summary }}
+                  {{ compositionSummary() }}
                 </p>
               } @else {
                 <div class="flex items-center justify-between">
@@ -378,6 +378,7 @@ export class DossierComponent implements OnInit {
   readonly isLoading = signal(false);
   readonly error = signal<string | null>(null);
   readonly riskAssessment = signal<DefenseRiskResponse | null>(null);
+  readonly latestAnalysis = signal<AnalysisResponse | null>(null);
 
   readonly timelineApproaches = computed<TimelineApproach[]>(() =>
     this.riskAssessment()?.riskOutput.planetaryDefense.notableApproaches ?? []
@@ -426,23 +427,34 @@ export class DossierComponent implements OnInit {
       : 'text-space-400',
   );
 
+  readonly compositionSummary = computed<string | null>(() =>
+    this.asteroid()?.composition_summary
+      ?? this.latestAnalysis()?.outputs?.geologist?.reasoning
+      ?? null
+  );
+
   readonly resourceKeyResources = computed<{ resource: string; significance: string }[]>(() => {
     const profile = this.asteroid()?.resource_profile;
-    if (!profile) return [];
-    const raw = (profile as Record<string, unknown>)['keyResources'];
-    if (!Array.isArray(raw)) return [];
-    return raw.filter(
-      (r): r is { resource: string; significance: string } =>
-        typeof r === 'object' && r !== null && typeof (r as Record<string, unknown>)['resource'] === 'string',
-    );
+    if (profile) {
+      const raw = (profile as Record<string, unknown>)['keyResources'];
+      if (Array.isArray(raw)) {
+        return raw.filter(
+          (r): r is { resource: string; significance: string } =>
+            typeof r === 'object' && r !== null && typeof (r as Record<string, unknown>)['resource'] === 'string',
+        );
+      }
+    }
+    return this.latestAnalysis()?.outputs?.geologist?.keyResources ?? [];
   });
 
   readonly resourceSpectralClass = computed<string | null>(() => {
     const profile = this.asteroid()?.resource_profile;
-    if (!profile) return null;
-    const sc = (profile as Record<string, unknown>)['spectralClass'];
-    if (typeof sc === 'string' && sc !== 'unknown') return sc;
-    return null;
+    if (profile) {
+      const sc = (profile as Record<string, unknown>)['spectralClass'];
+      if (typeof sc === 'string' && sc !== 'unknown') return sc;
+    }
+    const fromAnalysis = this.latestAnalysis()?.outputs?.geologist?.spectralClass;
+    return (fromAnalysis && fromAnalysis !== 'unknown') ? fromAnalysis : null;
   });
 
   readonly orbitalFields = computed(() => {
@@ -499,6 +511,12 @@ export class DossierComponent implements OnInit {
     // Fetch risk assessment in parallel; 404 = no analysis yet, handled silently
     this.api.getRiskAssessment(id).subscribe({
       next: (r) => this.riskAssessment.set(r),
+      error: () => { /* 404 = no analysis run yet */ },
+    });
+
+    // Fetch latest analysis for composition/economics fallback; 404 = no analysis yet
+    this.api.getLatestAnalysis(id).subscribe({
+      next: (a) => this.latestAnalysis.set(a),
       error: () => { /* 404 = no analysis run yet */ },
     });
 

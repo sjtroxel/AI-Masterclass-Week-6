@@ -24,6 +24,12 @@ vi.mock('../../src/services/orchestrator/orchestrator.js', () => ({
   runOrchestrator: mockRunOrchestrator,
 }));
 
+// Stub asteroid lookups so resolveAsteroidUuid works in tests without a real DB
+vi.mock('../../src/services/asteroidService.js', () => ({
+  getAsteroidById: vi.fn().mockResolvedValue({ id: 'test-asteroid-uuid' }),
+  getAsteroidByNasaId: vi.fn().mockResolvedValue({ id: 'test-asteroid-uuid' }),
+}));
+
 vi.mock('../../src/db/supabase.js', () => ({
   supabase: { from: mockSupabaseFrom },
   supabaseAdmin: {},

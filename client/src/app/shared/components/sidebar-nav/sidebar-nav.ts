@@ -55,14 +55,12 @@ const NAV_ITEMS: NavItem[] = [
                   md:sticky md:top-0 md:h-screen
                   bg-space-900 border-r border-space-700 overflow-y-auto">
 
-      <!-- Logo / app name -->
-      <div class="px-5 py-5 border-b border-space-700">
-        <p class="text-[10px] font-semibold tracking-widest uppercase text-space-300">
-          Intelligence Platform
-        </p>
-        <h1 class="mt-0.5 text-stellar-400 font-bold text-base leading-tight tracking-tight">
-          Asteroid Bonanza
-        </h1>
+      <!-- Logo -->
+      <div class="px-3 py-4 border-b border-space-700 flex items-center justify-center">
+        <a routerLink="/search" aria-label="Asteroid Bonanza home">
+          <img src="asteroidlogo.png" alt="Asteroid Bonanza"
+               class="w-full max-w-50 h-auto object-contain">
+        </a>
       </div>
 
       <!-- Nav items -->
