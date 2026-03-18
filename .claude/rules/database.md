@@ -7,9 +7,9 @@
 - Test rollback locally before committing any migration
 
 ## AI fields
-- All AI-generated fields (embedding vectors, confidence scores, agent-generated text, spectral inferences) must be nullable until Phase 5
-- Schema comment on every nullable AI field: `-- populated in Phase 5 by AI ingest pipeline`
-- Do not write application code that assumes AI fields are populated until Phase 5
+- AI-generated fields (embedding vectors, confidence scores, agent-generated text, spectral inferences) must be nullable with a `NOT NULL` constraint added only after the ingest pipeline confirms population
+- Schema comment on every nullable AI field: `-- populated by <pipeline function name, e.g. runAgentSwarm()>`
+- Existing AI fields (Phases 1–7) are populated — treat them as non-null in application code
 
 ## Credentials
 - Never hardcode database URLs, passwords, or API keys in any source file
@@ -18,7 +18,7 @@
 - Use `dotenv` in development; Railway/Vercel environment config in production
 
 ## pgvector
-- Vector columns: `embedding vector(1024)` (Voyage AI `voyage-3` produces 1024-dimensional embeddings)
+- Vector columns: `embedding vector(1024)` (Voyage AI `voyage-large-2-instruct` produces 1024-dimensional embeddings)
 - Index type: `ivfflat` with `lists = 100` for datasets up to ~100k rows
 - Similarity function: cosine distance (`<=>`) — not L2, not inner product
 - Always `ANALYZE` the table after bulk inserts before running similarity searches

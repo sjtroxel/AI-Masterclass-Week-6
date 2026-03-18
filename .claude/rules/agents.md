@@ -24,11 +24,11 @@
 ## Model selection
 - Lead Orchestrator: `claude-sonnet-4-6` (complex reasoning, synthesis)
 - Navigator, Geologist, Economist, Risk Assessor: `claude-sonnet-4-6` for analysis tasks
-- Classification / triage / routing sub-tasks: `claude-haiku-4-5-20251001` (fast, cheap)
-- Never hardcode model strings in agent files — import from `shared/models.ts`
+- Classification / triage / routing sub-tasks: `claude-haiku-4-5-20251001` (fast, cheap) — not yet implemented; planned for Phase 8 cost optimization
+- Never hardcode model strings in agent files — import from `shared/models.js` (types declared in `shared/models.d.ts`)
 
 ## Human handoff
-- `HANDOFF_THRESHOLD` starts at 0.55 — calibrate in Phase 5 after real outputs
+- `HANDOFF_THRESHOLD` is 0.30 (calibrated in Phase 5 from initial 0.55 after live Apophis/Bennu/Ryugu runs — do not change without re-running agent evaluation suite)
 - When aggregate confidence falls below threshold, the Orchestrator produces a `HandoffPackage` instead of a synthesis
 - `HandoffPackage` must include: what was found, where confidence broke down, what a human expert would need to assess
 - Handoff is a first-class feature, not an error state — treat it with the same care as a successful synthesis

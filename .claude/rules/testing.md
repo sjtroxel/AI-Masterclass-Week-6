@@ -29,11 +29,11 @@
 
 ## Coverage
 - Target: 80% line coverage on `server/` — enforced in CI
-- No coverage requirement on Angular components in early phases — E2E covers the happy paths
+- Angular component coverage: E2E tests cover happy paths; unit tests required only for pipes and pure functions. No component-level coverage threshold enforced.
 - Agent logic gets unit-tested with mock LLM responses (fixture files, not live API calls)
 
 ## Fixtures
-- LLM response fixtures live in `tests/fixtures/llm/`
-- NASA API response fixtures live in `tests/fixtures/nasa/`
+- LLM response fixtures live in `server/tests/fixtures/llm/`
+- NASA API response fixtures live in `server/tests/fixtures/nasa/`
 - Never make live external API calls in unit or integration tests
 - Live API calls are permitted only in scripts labeled `scripts/validate-*.ts`

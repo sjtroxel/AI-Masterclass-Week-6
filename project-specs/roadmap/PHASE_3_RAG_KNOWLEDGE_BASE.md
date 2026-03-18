@@ -2,7 +2,7 @@
 
 **Goal**: Dual-index knowledge base ingested and retrieval quality verified. No frontend changes.
 
-**Status**: In progress
+**Status**: Complete ✓
 
 **Prerequisite**: RAG document source list compiled and verified during Phase 0. Do not begin this phase without the verified list in hand.
 

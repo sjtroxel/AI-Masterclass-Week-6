@@ -15,7 +15,7 @@
 | 4 | [The Analyst](roadmap/PHASE_4_ANALYST.md) | **Complete** ✓ |
 | 5 | [The Agent Swarm](roadmap/PHASE_5_AGENT_SWARM.md) | **Complete** ✓ |
 | 6 | [Mission Planning & Orbital Visualization](roadmap/PHASE_6_MISSION_PLANNING.md) | **Complete** ✓ |
-| 7 | [Planetary Defense Watch](roadmap/PHASE_7_PLANETARY_DEFENSE.md) | Not started |
+| 7 | [Planetary Defense Watch](roadmap/PHASE_7_PLANETARY_DEFENSE.md) | **Complete** ✓ |
 | 8 | [Hardening, Polish & Production](roadmap/PHASE_8_HARDENING.md) | Not started |
 
 **Rule**: No phase begins until the previous phase's deliverables are complete and tested. There is no deadline — quality over speed.

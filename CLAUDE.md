@@ -75,7 +75,7 @@ asteroid-bonanza/
 ├── client/                  # Angular 21 frontend
 │   └── src/app/
 │       ├── core/            # Singleton services, HttpClient wrapper
-│       ├── features/        # Feature slices (search, detail, analysis, analyst-chat, defense-watch)
+│       ├── features/        # Feature slices (search, dossier, analysis, analyst-chat, defense-watch, mission-planning, orbital-canvas)
 │       └── shared/          # Shared dumb components
 ├── server/                  # Express 5 backend
 │   └── src/
@@ -123,15 +123,15 @@ npm run test                 # all unit + integration tests (Vitest)
 npm run test:e2e             # Playwright E2E (375px + 1280px viewports)
 
 # Data pipeline (run after DB is set up)
-npm run script ingestNasa
-npm run script ingestDocuments
+npm run ingestNasa
+npm run ingestDocuments
 ```
 
 ---
 
 ## Agent Architecture Summary
 
-Four domain agents, one Lead Orchestrator. Agents communicate only through `SwarmState` — no direct agent-to-agent calls. Confidence scores are computed from observable fields, never self-reported. When aggregate confidence falls below `HANDOFF_THRESHOLD` (0.55, calibrated in Phase 5), the Orchestrator produces a `HandoffPackage` instead of a synthesis.
+Four domain agents, one Lead Orchestrator. Agents communicate only through `SwarmState` — no direct agent-to-agent calls. Confidence scores are computed from observable fields, never self-reported. When aggregate confidence falls below `HANDOFF_THRESHOLD` (0.30, empirically calibrated in Phase 5), the Orchestrator produces a `HandoffPackage` instead of a synthesis.
 
 | Agent | Domain | Model |
 |---|---|---|
@@ -170,7 +170,7 @@ The AI Analyst is architecturally constrained to these indices. It cannot use mo
 | 8 | Hardening & Deployment | Not started |
 
 Full roadmap: `project-specs/ROADMAP.md`
-Current phase details: `project-specs/roadmap/PHASE_8_HARDENING.md` (not yet written)
+Current phase details: `project-specs/roadmap/PHASE_8_HARDENING.md`
 
 ---
 
@@ -191,4 +191,5 @@ Current phase details: `project-specs/roadmap/PHASE_8_HARDENING.md` (not yet wri
 - Three.js orbital viz is Phase 6 scope, not earlier; `@types/three` IS required (three@0.183.x ships no .d.ts)
 - Apophis 2029 is a hand-crafted featured case study in Phase 7
 
-*Last updated: 2026-03-18 — Phase 7 complete ✓. 176 tests passing. Phase 7 shipped: 3 defense API endpoints + `GET /api/defense/risk/:nasaId`; shared types `PhaListItem/UpcomingApproach/ApophisDetail/DefenseRiskResponse`; Defense Watch dashboard (`/defense`) with PHA list + upcoming approaches + 30/90/365-day filter + 20-per-page pagination; Apophis 2029 feature page (`/defense/apophis`) with hand-crafted editorial, live countdown, orbital canvas with animated orbit, AI Risk Assessor section, close approach timeline; `ApproachTimelineComponent` (table layout); timeline embedded in dossier + analysis pages; Apophis nasa_id corrected to `2099942`; deduplication script; asteroid display names fixed across all cards/pages (name → designation → nasa_id with nasa_id subline). Phase 8 (Hardening & Deployment) is next.*
+*Last updated: 2026-03-18 — Phase 7 complete. Phase 8 (Hardening & Deployment) is next.*
+*See `project-specs/roadmap/PHASE_8_HARDENING.md` for full Phase 8 scope.*

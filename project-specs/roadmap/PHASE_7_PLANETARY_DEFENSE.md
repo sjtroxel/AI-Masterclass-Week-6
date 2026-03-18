@@ -17,8 +17,8 @@ The Apophis page is **hand-crafted** — not AI-generated boilerplate. It should
 ## Deliverables
 
 ### Data
-- [ ] Close approach data for all PHAs ingested and current
-- [ ] Apophis 99942 data fully populated — all orbital elements, close approach history, 2029 event data
+- [x] Close approach data for all PHAs ingested — `ingestNasa` script populates from JPL CAD; re-run periodically to stay current
+- [x] Apophis 99942 data fully populated — nasa_id corrected to `2099942`; all orbital elements, close approaches, and 2029 event data present; deduplication script run
 
 ### Backend
 - [x] `GET /api/defense/risk/:nasaId` — Risk Assessor standalone endpoint ✓

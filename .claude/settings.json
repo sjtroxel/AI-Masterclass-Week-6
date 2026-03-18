@@ -11,8 +11,11 @@
       "Write(*.pem)",
       "Write(.aws/**)",
       "Write(.ssh/**)",
+      "Edit(.env*)",
       "Bash(cat .env*)",
-      "Bash(echo * > .env*)"
+      "Bash(echo * > .env*)",
+      "Bash(git commit*)",
+      "Bash(git push*)"
     ]
   }
 }

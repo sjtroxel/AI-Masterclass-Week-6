@@ -8,7 +8,7 @@
 
 ## Pre-work (before writing Phase 6 code)
 
-- [ ] **Backfill compositions** — run `npm run backfillCompositions -- --limit 50` (or more) to populate `composition_summary` on dossier pages. Deferred from Phase 5; only meaningful once the swarm was verified working. Do this before building the comparison UI so there is real data to compare.
+- [x] **Backfill compositions** — cut in Phase 5. On-demand "Analyze →" links from the dossier run the full four-agent swarm instead, producing richer output than a pre-baked composition-only script. No UI feature consumes a pre-populated field, so there is nothing to populate ahead of time.
 - [x] **Confirm Three.js approach** — decided 2026-03-16. See decision record below.
 
 ---
