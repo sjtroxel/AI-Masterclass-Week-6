@@ -280,11 +280,14 @@ export class SearchComponent implements OnInit {
     Math.max(1, Math.ceil(this.svc.total() / 20));
 
   readonly totalLabel = () => {
-    const t = this.svc.total();
+    // Use catalog size (unfiltered) for the headline so it never varies with sort/filter state.
+    const cat = this.svc.catalogSize();
+    const t = cat ?? this.svc.total();
     return t > 0 ? `${t.toLocaleString()} asteroids` : 'asteroids';
   };
 
   ngOnInit(): void {
+    this.svc.loadCatalogSize();
     this.svc.loadBrowsePage(1, {});
   }
 

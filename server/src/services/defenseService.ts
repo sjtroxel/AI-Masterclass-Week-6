@@ -40,10 +40,16 @@ const APOPHIS_NASA_ID = '99942';
 // ── getPhaList ─────────────────────────────────────────────────────────────────
 
 export async function getPhaList(): Promise<PhaListItem[]> {
+  // Exclude PHAs whose next_approach_date has already passed.
+  // Use yesterday as the cutoff (not today) to be robust against server clock drift.
+  // PHAs with null next_approach_date are retained — they are not stale, just unmapped.
+  const yesterday = new Date(Date.now() - 86_400_000).toISOString().split('T')[0]!;
+
   const { data, error } = await supabase
     .from('asteroids')
     .select(PHA_COLUMNS)
     .eq('is_pha', true)
+    .or(`next_approach_date.is.null,next_approach_date.gt.${yesterday}`)
     .order('next_approach_date', { ascending: true, nullsFirst: false });
 
   if (error) {

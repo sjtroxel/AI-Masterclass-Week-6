@@ -16,29 +16,11 @@ import {
   type OrbitalAsteroid,
 } from '../orbital-canvas/orbital-canvas.component';
 import { type OrbitalElements } from '../orbital-canvas/orbit-math.js';
-
-// April 13, 2029 00:00 UTC — the Apophis flyby date
-const APOPHIS_FLYBY_MS = new Date('2029-04-13T00:00:00Z').getTime();
-
-interface Countdown {
-  days: number;
-  hours: number;
-  minutes: number;
-  seconds: number;
-  past: boolean;
-}
-
-function buildCountdown(now: number): Countdown {
-  const diff = APOPHIS_FLYBY_MS - now;
-  if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0, past: true };
-  return {
-    days:    Math.floor(diff / 86_400_000),
-    hours:   Math.floor((diff % 86_400_000) / 3_600_000),
-    minutes: Math.floor((diff % 3_600_000)  /    60_000),
-    seconds: Math.floor((diff %    60_000)  /     1_000),
-    past:    false,
-  };
-}
+import {
+  ApproachTimelineComponent,
+  type TimelineApproach,
+} from '../../shared/components/approach-timeline/approach-timeline.component';
+import { buildCountdown } from './apophis-utils.js';
 
 function apophisToOrbital(d: ApophisDetail): OrbitalAsteroid | null {
   if (
@@ -66,7 +48,7 @@ function apophisToOrbital(d: ApophisDetail): OrbitalAsteroid | null {
 @Component({
   selector: 'app-apophis-feature',
   standalone: true,
-  imports: [RouterLink, OrbitalCanvasComponent, DecimalPipe],
+  imports: [RouterLink, OrbitalCanvasComponent, DecimalPipe, ApproachTimelineComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="min-h-screen bg-space-950">
@@ -347,6 +329,20 @@ function apophisToOrbital(d: ApophisDetail): OrbitalAsteroid | null {
           </section>
         }
 
+        <!-- ── Close Approach Timeline ───────────────────────────── -->
+        @if (apophisApproaches().length > 0) {
+          <section>
+            <div class="flex items-center gap-2 mb-3">
+              <span class="text-xs font-bold text-amber-400">Approaches</span>
+              <div class="flex-1 h-px bg-space-700"></div>
+            </div>
+            <h2 class="text-lg font-bold text-white mb-3">Close Approach Data</h2>
+            <div class="bg-space-900 border border-space-700 rounded-xl px-3 py-4">
+              <app-approach-timeline [approaches]="apophisApproaches()" />
+            </div>
+          </section>
+        }
+
         <!-- ── Bottom CTAs ───────────────────────────────────────── -->
         <section class="pb-6">
           <div class="flex items-center gap-2 mb-4">
@@ -441,6 +437,38 @@ export class ApophisFeatureComponent implements OnInit {
       { label: 'H Magnitude',    value: d.absolute_magnitude_h?.toFixed(1) ?? '—' },
       { label: 'NHATS Accessible', value: d.nhats_accessible ? 'Yes' : 'No' },
     ];
+  });
+
+  readonly apophisApproaches = computed<TimelineApproach[]>(() => {
+    const d = this.data();
+    if (!d) return [];
+    const items: TimelineApproach[] = [];
+    // 2029 flyby — the featured event
+    if (d.next_approach_date !== null && d.next_approach_miss_km !== null) {
+      items.push({
+        close_approach_date: d.next_approach_date,
+        miss_distance_km: d.next_approach_miss_km,
+        relative_velocity_km_s: 7.42, // well-known value for 2029 flyby
+        orbiting_body: 'Earth',
+      });
+    }
+    // Closest historical approach (if different from next)
+    if (
+      d.closest_approach_date !== null &&
+      d.closest_approach_au !== null &&
+      d.closest_approach_date !== d.next_approach_date
+    ) {
+      items.push({
+        close_approach_date: d.closest_approach_date,
+        miss_distance_km: Math.round(d.closest_approach_au * 149_597_870.7),
+        orbiting_body: 'Earth',
+      });
+    }
+    return items.sort(
+      (a, b) =>
+        new Date(a.close_approach_date).getTime() -
+        new Date(b.close_approach_date).getTime(),
+    );
   });
 
   readonly flybyfacts = [

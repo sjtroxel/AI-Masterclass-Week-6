@@ -34,10 +34,22 @@ export class SearchService {
   readonly browseResults = signal<AsteroidListItem[]>([]);
   readonly searchResults = signal<AsteroidSearchResult[]>([]);
   readonly total = signal(0);
+  /** Full catalog count — fetched once with no filters; unaffected by sort/filter state. */
+  readonly catalogSize = signal<number | null>(null);
 
   readonly mode = computed<SearchMode>(() =>
     this.query().trim().length > 0 ? 'semantic' : 'browse',
   );
+
+  // ── Catalog size (fetched once, never changes with filters) ──────────────
+
+  loadCatalogSize(): void {
+    if (this.catalogSize() !== null) return; // already loaded
+    this.api.listAsteroids(1, 1, {}).subscribe({
+      next: (res) => this.catalogSize.set(res.total),
+      error: () => { /* non-critical — headline falls back to filtered total */ },
+    });
+  }
 
   // ── Browse (filter-based) ─────────────────────────────────────────────────
 
