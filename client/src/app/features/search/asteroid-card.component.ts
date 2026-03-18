@@ -20,8 +20,8 @@ import type { AsteroidListItem, AsteroidSearchResult } from '../../core/api.serv
                      group-hover:text-nebula-400 transition-colors">
             {{ displayName() }}
           </h3>
-          @if (asteroid().designation && asteroid().designation !== displayName()) {
-            <p class="text-space-300 text-xs mt-0.5 font-mono">{{ asteroid().designation }}</p>
+          @if (asteroid().nasa_id !== displayName()) {
+            <p class="text-space-300 text-xs mt-0.5 font-mono">{{ asteroid().nasa_id }}</p>
           }
         </div>
 
@@ -90,7 +90,7 @@ export class AsteroidCardComponent {
 
   readonly displayName = computed(() => {
     const a = this.asteroid();
-    return a.full_name ?? a.name ?? a.designation ?? a.nasa_id;
+    return a.name ?? a.designation ?? a.nasa_id;
   });
 
   readonly spectralType = computed(() => {

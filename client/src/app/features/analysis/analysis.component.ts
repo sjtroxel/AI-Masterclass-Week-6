@@ -10,13 +10,17 @@ import {
 import { RouterLink } from '@angular/router';
 import { ApiService, type AnalysisResponse, type AgentEvent } from '../../core/api.service.js';
 import { MarkdownPipe } from '../../shared/pipes/markdown.pipe.js';
+import {
+  ApproachTimelineComponent,
+  type TimelineApproach,
+} from '../../shared/components/approach-timeline/approach-timeline.component.js';
 
 type AnalysisState = 'idle' | 'running' | 'complete' | 'handoff' | 'error';
 
 @Component({
   selector: 'app-analysis',
   standalone: true,
-  imports: [RouterLink, MarkdownPipe],
+  imports: [RouterLink, MarkdownPipe, ApproachTimelineComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="min-h-screen bg-space-950 pb-24 md:pb-8">
@@ -396,6 +400,12 @@ type AnalysisState = 'idle' | 'running' | 'complete' | 'handoff' | 'error';
                     {{ analysis()!.outputs.risk!.planetaryDefense.mitigationContext }}
                   </p>
                 }
+                @if (riskTimelineApproaches().length > 0) {
+                  <div class="mt-3 pt-3 border-t border-space-800">
+                    <p class="text-[10px] text-space-400 uppercase tracking-wide mb-2">Notable Approaches</p>
+                    <app-approach-timeline [approaches]="riskTimelineApproaches()" />
+                  </div>
+                }
               </section>
             }
 
@@ -586,6 +596,10 @@ export class AnalysisComponent implements OnInit {
       toRow('Other', comp.other_pct),
     ];
   });
+
+  readonly riskTimelineApproaches = computed<TimelineApproach[]>(() =>
+    this.analysis()?.outputs?.risk?.planetaryDefense.notableApproaches ?? []
+  );
 
   readonly agentLatencyEntries = computed(() => {
     const t = this.analysis()?.trace;

@@ -8,7 +8,11 @@ import {
   input,
 } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
-import { ApiService, type AsteroidDetail } from '../../core/api.service';
+import { ApiService, type AsteroidDetail, type DefenseRiskResponse } from '../../core/api.service';
+import {
+  ApproachTimelineComponent,
+  type TimelineApproach,
+} from '../../shared/components/approach-timeline/approach-timeline.component.js';
 import {
   OrbitalCanvasComponent,
   asteroidDetailToOrbital,
@@ -18,7 +22,7 @@ import {
 @Component({
   selector: 'app-dossier',
   standalone: true,
-  imports: [RouterLink, OrbitalCanvasComponent],
+  imports: [RouterLink, OrbitalCanvasComponent, ApproachTimelineComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <!-- Empty state when accessed directly without an id -->
@@ -93,9 +97,9 @@ import {
                 <h1 class="text-xl font-bold text-white md:text-2xl leading-tight">
                   {{ displayName() }}
                 </h1>
-                @if (asteroid()!.designation) {
+                @if (asteroid()!.nasa_id !== displayName()) {
                   <p class="text-space-300 text-sm font-mono mt-0.5">
-                    {{ asteroid()!.designation }}
+                    {{ asteroid()!.nasa_id }}
                   </p>
                 }
               </div>
@@ -284,6 +288,34 @@ import {
 
           </div>
 
+          <!-- Close Approach Timeline -->
+          <div class="px-4 pb-4 md:px-8">
+            <section class="bg-space-900 rounded-xl p-4 md:p-5">
+              <h2 class="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                <svg class="w-4 h-4 text-nebula-400" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                     aria-hidden="true">
+                  <path d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
+                </svg>
+                Close Approach History
+              </h2>
+              @if (timelineApproaches().length > 0) {
+                <app-approach-timeline [approaches]="timelineApproaches()" />
+              } @else {
+                <div class="flex items-center justify-between gap-4">
+                  <p class="text-xs text-space-400">
+                    Run an AI analysis to populate this asteroid's notable close approach history.
+                  </p>
+                  <a [routerLink]="['/analysis', id()]"
+                     class="text-xs text-nebula-400 hover:text-nebula-300 transition-colors
+                            min-h-[44px] flex items-center px-2 shrink-0">
+                    Analyze →
+                  </a>
+                </div>
+              }
+            </section>
+          </div>
+
           <!-- NHATS mission details (if accessible) -->
           @if (asteroid()!.nhats_accessible) {
             <div class="px-4 pb-4 md:px-8 md:pb-5">
@@ -345,6 +377,11 @@ export class DossierComponent implements OnInit {
   readonly asteroid = signal<AsteroidDetail | null>(null);
   readonly isLoading = signal(false);
   readonly error = signal<string | null>(null);
+  readonly riskAssessment = signal<DefenseRiskResponse | null>(null);
+
+  readonly timelineApproaches = computed<TimelineApproach[]>(() =>
+    this.riskAssessment()?.riskOutput.planetaryDefense.notableApproaches ?? []
+  );
 
   /** Converted orbital data for the canvas — null when orbital elements missing */
   readonly orbitalAsteroid = computed<OrbitalAsteroid | null>(() => {
@@ -357,7 +394,7 @@ export class DossierComponent implements OnInit {
   readonly displayName = computed(() => {
     const a = this.asteroid();
     if (!a) return '';
-    return a.full_name ?? a.name ?? a.designation ?? a.nasa_id;
+    return a.name ?? a.designation ?? a.nasa_id;
   });
 
   readonly spectralType = computed(() => {
@@ -458,6 +495,12 @@ export class DossierComponent implements OnInit {
   private loadAsteroid(id: string): void {
     this.isLoading.set(true);
     this.error.set(null);
+
+    // Fetch risk assessment in parallel; 404 = no analysis yet, handled silently
+    this.api.getRiskAssessment(id).subscribe({
+      next: (r) => this.riskAssessment.set(r),
+      error: () => { /* 404 = no analysis run yet */ },
+    });
 
     this.api.getAsteroid(id).subscribe({
       next: (data) => {

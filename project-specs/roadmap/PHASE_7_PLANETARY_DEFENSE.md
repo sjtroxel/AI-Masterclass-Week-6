@@ -2,7 +2,7 @@
 
 **Goal**: PHA dashboard, live close approach tracking, and Apophis 2029 as a rich featured case study.
 
-**Status**: In progress — Steps 1–4 complete ✓ (2026-03-17)
+**Status**: Complete ✓ — All steps done (2026-03-18). Phase 8 is next.
 
 ---
 
@@ -21,21 +21,25 @@ The Apophis page is **hand-crafted** — not AI-generated boilerplate. It should
 - [ ] Apophis 99942 data fully populated — all orbital elements, close approach history, 2029 event data
 
 ### Backend
-- [ ] Risk Assessor Agent surfaced as a standalone endpoint (not only part of full swarm analysis)
-- [x] `GET /api/defense/pha` — PHA list with risk data ✓
+- [x] `GET /api/defense/risk/:nasaId` — Risk Assessor standalone endpoint ✓
+- [x] `GET /api/defense/pha` — PHA list with risk data (hazard_rating from analyses) ✓
 - [x] `GET /api/defense/upcoming` — upcoming close approaches, sorted by date ✓
 - [x] `GET /api/defense/apophis` — Apophis 2029 detailed data for the featured page ✓
 
 ### Frontend — Defense Dashboard
 - [x] PHA list with risk visualization — mobile: stacked list; desktop: 2-column grid ✓
 - [x] Upcoming close approaches — real data, sorted by date, with 30/90/365-day filter ✓
-- [ ] Risk Assessor Agent results displayed as standalone feature
+- [x] Hazard rating badge auto-populated from analyses table ✓
+- [x] Pagination (20 per page) on PHA list and upcoming approaches ✓
+- Diameter/hazard filter pills — explicitly rejected by user, will not be built
 
 ### Frontend — Apophis Feature Page
 - [x] Hand-crafted editorial content — discovery story, 2029 flyby details, scientific significance ✓
 - [x] Live countdown to April 13, 2029 ✓
 - [x] Orbital visualization (Phase 6 canvas) with Apophis highlighted ✓
-- [ ] Risk Assessor Agent analysis of Apophis surfaced prominently
+- [x] Risk Assessor Agent analysis surfaced prominently — hazard badge, monitoring status, timeline, mitigation context ✓
+- [x] Close approach timeline component ✓
+- [x] Animated orbit ("Animate Orbit" / "Pause" button, 1.5°/tick at 50ms) ✓
 - [x] Mobile-first layout — shareable and readable on a phone ✓
 
 **Exit condition**: The Apophis feature page is live with hand-crafted content and a working countdown. The PHA dashboard shows real upcoming approach data. The defense watch is usable and informative on mobile.

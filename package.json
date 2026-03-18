@@ -22,6 +22,7 @@
     "validateRag": "tsx --env-file=server/.env scripts/src/validateRag.ts",
     "validateExternalApis": "tsx scripts/src/validateExternalApis.ts",
     "backfillCompositions": "tsx --env-file=server/.env scripts/src/backfillCompositions.ts",
+    "deduplicateNasaIds": "tsx --env-file=server/.env scripts/src/deduplicateNasaIds.ts",
     "prepare": "husky"
   },
   "devDependencies": {

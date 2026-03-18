@@ -10,7 +10,7 @@ import {
 import { RouterLink } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
 import { ApiService } from '../../core/api.service';
-import type { ApophisDetail } from '../../core/api.service';
+import type { ApophisDetail, DefenseRiskResponse, RiskOutput } from '../../core/api.service';
 import {
   OrbitalCanvasComponent,
   type OrbitalAsteroid,
@@ -110,7 +110,7 @@ function apophisToOrbital(d: ApophisDetail): OrbitalAsteroid | null {
 
           <!-- CTAs -->
           <div class="mt-6 flex flex-wrap gap-3">
-            <a routerLink="/dossier/99942"
+            <a routerLink="/dossier/2099942"
                class="px-4 py-2.5 bg-space-800 hover:bg-space-700 border border-space-600
                       text-white text-sm font-medium rounded-lg transition-colors
                       min-h-[44px] flex items-center gap-2">
@@ -121,7 +121,7 @@ function apophisToOrbital(d: ApophisDetail): OrbitalAsteroid | null {
               </svg>
               Raw Dossier
             </a>
-            <a routerLink="/analysis/99942"
+            <a routerLink="/analysis/2099942"
                class="px-4 py-2.5 bg-nebula-700 hover:bg-nebula-600 border border-nebula-500
                       text-white text-sm font-medium rounded-lg transition-colors
                       min-h-[44px] flex items-center gap-2">
@@ -160,15 +160,43 @@ function apophisToOrbital(d: ApophisDetail): OrbitalAsteroid | null {
         <!-- ── Orbital Canvas ────────────────────────────────────── -->
         @if (orbitalAsteroid() !== null) {
           <section>
-            <h2 class="text-sm font-semibold text-space-300 uppercase tracking-widest mb-3">
-              Orbital Path
-            </h2>
+            <div class="flex items-center justify-between mb-3">
+              <h2 class="text-sm font-semibold text-space-300 uppercase tracking-widest">
+                Orbital Path
+              </h2>
+              <button
+                (click)="toggleAnimation()"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium
+                       border transition-colors min-h-9"
+                [class.bg-amber-900]="isAnimating()"
+                [class.text-amber-200]="isAnimating()"
+                [class.border-amber-700]="isAnimating()"
+                [class.bg-space-800]="!isAnimating()"
+                [class.text-space-300]="!isAnimating()"
+                [class.border-space-600]="!isAnimating()">
+                @if (isAnimating()) {
+                  <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <rect x="6" y="4" width="4" height="16"/>
+                    <rect x="14" y="4" width="4" height="16"/>
+                  </svg>
+                  Pause
+                } @else {
+                  <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <polygon points="5 3 19 12 5 21 5 3"/>
+                  </svg>
+                  Animate Orbit
+                }
+              </button>
+            </div>
             <app-orbital-canvas
               [asteroids]="[orbitalAsteroid()!]"
-              highlightId="99942"
+              highlightId="2099942"
             />
             <p class="mt-2 text-xs text-space-400">
               Apophis orbit highlighted in white. Aten-class asteroid — crosses Earth's orbit.
+              @if (isAnimating()) {
+                <span class="text-amber-400"> · Animating orbital position</span>
+              }
             </p>
           </section>
         }
@@ -329,6 +357,86 @@ function apophisToOrbital(d: ApophisDetail): OrbitalAsteroid | null {
           </section>
         }
 
+        <!-- ── Risk Assessment ──────────────────────────────────── -->
+        <section>
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-xs font-bold text-red-400">Risk Assessment</span>
+            <div class="flex-1 h-px bg-space-700"></div>
+          </div>
+          <h2 class="text-lg font-bold text-white mb-3">AI Risk Assessor Analysis</h2>
+
+          @if (riskData(); as risk) {
+            <!-- Hazard rating + mission risk summary -->
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 mb-4">
+              <div class="bg-space-900 border border-space-700 rounded-xl px-3 py-3">
+                <p class="text-[10px] text-space-400 uppercase tracking-wide">Hazard Rating</p>
+                <span class="inline-block mt-1.5 text-xs font-bold px-2 py-0.5 rounded-full border uppercase tracking-wide"
+                      [class]="hazardBadgeClass()">
+                  {{ risk.riskOutput.planetaryDefense.hazardRating }}
+                </span>
+              </div>
+              <div class="bg-space-900 border border-space-700 rounded-xl px-3 py-3">
+                <p class="text-[10px] text-space-400 uppercase tracking-wide">Mission Risk</p>
+                <p class="text-sm font-bold text-white mt-0.5 capitalize">
+                  {{ risk.riskOutput.missionRisk.overallRating }}
+                </p>
+              </div>
+              <div class="bg-space-900 border border-space-700 rounded-xl px-3 py-3 col-span-2 sm:col-span-1">
+                <p class="text-[10px] text-space-400 uppercase tracking-wide">Data Completeness</p>
+                <p class="text-sm font-bold text-white mt-0.5">
+                  {{ (risk.riskOutput.dataCompleteness * 100).toFixed(0) }}%
+                </p>
+              </div>
+            </div>
+
+            <!-- Monitoring status -->
+            <p class="text-sm text-space-300 leading-relaxed mb-3">
+              {{ risk.riskOutput.planetaryDefense.monitoringStatus }}
+            </p>
+
+            <!-- Notable approaches from risk analysis -->
+            @if (riskApproaches().length > 0) {
+              <div class="bg-space-900 border border-space-700 rounded-xl px-3 py-4 mb-3">
+                <p class="text-[10px] text-space-400 uppercase tracking-widest mb-3">
+                  Notable Approaches (from AI Analysis)
+                </p>
+                <app-approach-timeline [approaches]="riskApproaches()" />
+              </div>
+            }
+
+            <!-- Mitigation context -->
+            <p class="text-sm text-space-300 leading-relaxed mb-3">
+              {{ risk.riskOutput.planetaryDefense.mitigationContext }}
+            </p>
+
+            <!-- Footer attribution -->
+            <p class="text-xs text-space-500 mt-2">
+              Risk Assessor Agent · Analysis
+              <a [routerLink]="['/analysis', '2099942']"
+                 class="text-nebula-400 hover:text-nebula-300 underline transition-colors">
+                {{ risk.analysisId.slice(0, 8) }}
+              </a>
+            </p>
+
+          } @else {
+            <!-- No analysis yet -->
+            <div class="bg-space-900 border border-space-700 rounded-xl px-4 py-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div class="flex-1">
+                <p class="text-sm font-medium text-white">No risk assessment yet</p>
+                <p class="text-xs text-space-400 mt-1">
+                  Run the AI agent swarm to generate a full planetary defense and mission risk analysis for Apophis.
+                </p>
+              </div>
+              <a routerLink="/analysis/2099942"
+                 class="shrink-0 px-4 py-2.5 bg-nebula-700 hover:bg-nebula-600 border border-nebula-500
+                        text-white text-sm font-medium rounded-lg transition-colors
+                        min-h-[44px] flex items-center gap-2">
+                Run AI Analysis
+              </a>
+            </div>
+          }
+        </section>
+
         <!-- ── Close Approach Timeline ───────────────────────────── -->
         @if (apophisApproaches().length > 0) {
           <section>
@@ -352,7 +460,7 @@ function apophisToOrbital(d: ApophisDetail): OrbitalAsteroid | null {
             Explore the full orbital data and run the AI agent swarm on Apophis:
           </p>
           <div class="flex flex-wrap gap-3">
-            <a routerLink="/dossier/99942"
+            <a routerLink="/dossier/2099942"
                class="flex-1 min-w-35 text-center px-4 py-3 bg-space-800 hover:bg-space-700
                       border border-space-600 text-white text-sm font-medium rounded-xl
                       transition-colors min-h-[44px] flex items-center justify-center gap-2">
@@ -363,7 +471,7 @@ function apophisToOrbital(d: ApophisDetail): OrbitalAsteroid | null {
               </svg>
               View Dossier
             </a>
-            <a routerLink="/analysis/99942"
+            <a routerLink="/analysis/2099942"
                class="flex-1 min-w-35 text-center px-4 py-3 bg-nebula-800 hover:bg-nebula-700
                       border border-nebula-600 text-nebula-200 hover:text-white text-sm font-medium
                       rounded-xl transition-colors min-h-[44px] flex items-center justify-center gap-2">
@@ -393,6 +501,7 @@ export class ApophisFeatureComponent implements OnInit {
   readonly data = signal<ApophisDetail | null>(null);
   readonly loading = signal(true);
   readonly now = signal(Date.now());
+  readonly riskData = signal<DefenseRiskResponse | null>(null);
 
   readonly countdown = computed(() => buildCountdown(this.now()));
 
@@ -406,9 +515,16 @@ export class ApophisFeatureComponent implements OnInit {
     ];
   });
 
+  readonly animMeanAnomaly = signal<number | null>(null);
+  readonly isAnimating = signal(false);
+
   readonly orbitalAsteroid = computed<OrbitalAsteroid | null>(() => {
     const d = this.data();
-    return d ? apophisToOrbital(d) : null;
+    if (!d) return null;
+    const base = apophisToOrbital(d);
+    if (!base) return null;
+    const anim = this.animMeanAnomaly();
+    return anim !== null ? { ...base, meanAnomalyDeg: anim } : base;
   });
 
   readonly keyFacts = computed(() => {
@@ -437,6 +553,33 @@ export class ApophisFeatureComponent implements OnInit {
       { label: 'H Magnitude',    value: d.absolute_magnitude_h?.toFixed(1) ?? '—' },
       { label: 'NHATS Accessible', value: d.nhats_accessible ? 'Yes' : 'No' },
     ];
+  });
+
+  // Notable approaches from the Risk Assessor (if analysis exists), falling back to
+  // the denormalized next/closest approach fields from ApophisDetail.
+  readonly riskApproaches = computed<TimelineApproach[]>(() => {
+    const risk = this.riskData();
+    if (risk?.riskOutput.planetaryDefense.notableApproaches.length) {
+      return risk.riskOutput.planetaryDefense.notableApproaches.map((a) => ({
+        close_approach_date: a.close_approach_date,
+        miss_distance_km: a.miss_distance_km,
+        orbiting_body: a.orbiting_body,
+      }));
+    }
+    return [];
+  });
+
+  readonly hazardBadgeClass = computed(() => {
+    const rating = this.riskData()?.riskOutput.planetaryDefense.hazardRating;
+    const map: Record<RiskOutput['planetaryDefense']['hazardRating'], string> = {
+      high:       'bg-red-900/70 text-red-300 border-red-700/50',
+      elevated:   'bg-orange-900/70 text-orange-300 border-orange-700/50',
+      moderate:   'bg-yellow-900/70 text-yellow-300 border-yellow-700/50',
+      low:        'bg-blue-900/70 text-blue-300 border-blue-700/50',
+      negligible: 'bg-space-800 text-space-300 border-space-600',
+      none:       'bg-space-800 text-space-400 border-space-700',
+    };
+    return rating ? map[rating] : null;
   });
 
   readonly apophisApproaches = computed<TimelineApproach[]>(() => {
@@ -480,10 +623,39 @@ export class ApophisFeatureComponent implements OnInit {
     { label: 'Duration Visible', value: '~8 hours',    note: 'Europe, Africa, Asia' },
   ];
 
+  private animIntervalId: ReturnType<typeof setInterval> | null = null;
+
+  toggleAnimation(): void {
+    if (this.isAnimating()) {
+      this.stopAnimation();
+    } else {
+      this.startAnimation();
+    }
+  }
+
+  private startAnimation(): void {
+    this.isAnimating.set(true);
+    if (this.animMeanAnomaly() === null) this.animMeanAnomaly.set(0);
+    this.animIntervalId = setInterval(() => {
+      this.animMeanAnomaly.update((m) => ((m ?? 0) + 1.5) % 360);
+    }, 50);
+  }
+
+  private stopAnimation(): void {
+    if (this.animIntervalId !== null) {
+      clearInterval(this.animIntervalId);
+      this.animIntervalId = null;
+    }
+    this.isAnimating.set(false);
+  }
+
   ngOnInit(): void {
     // Live countdown tick
     const tick = setInterval(() => this.now.set(Date.now()), 1000);
-    this.destroyRef.onDestroy(() => clearInterval(tick));
+    this.destroyRef.onDestroy(() => {
+      clearInterval(tick);
+      if (this.animIntervalId !== null) clearInterval(this.animIntervalId);
+    });
 
     // Load Apophis data for orbital canvas + physical fields
     this.api.getApophis().subscribe({
@@ -495,6 +667,13 @@ export class ApophisFeatureComponent implements OnInit {
         // Editorial content renders without API data; orbital canvas simply won't show
         this.loading.set(false);
       },
+    });
+
+    // Load Risk Assessor output if a completed analysis exists.
+    // Failure is silent — the section renders a "no analysis yet" CTA instead.
+    this.api.getRiskAssessment('2099942').subscribe({
+      next: (r) => this.riskData.set(r),
+      error: () => { /* 404 = no analysis yet — handled in template */ },
     });
   }
 }

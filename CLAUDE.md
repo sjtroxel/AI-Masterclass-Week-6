@@ -166,11 +166,11 @@ The AI Analyst is architecturally constrained to these indices. It cannot use mo
 | 4 | AI Analyst | Complete ✓ |
 | 5 | Agent Swarm | Complete ✓ |
 | 6 | Mission Planning | Complete ✓ |
-| 7 | Planetary Defense | **In Progress** |
+| 7 | Planetary Defense | Complete ✓ |
 | 8 | Hardening & Deployment | Not started |
 
 Full roadmap: `project-specs/ROADMAP.md`
-Current phase details: `project-specs/roadmap/PHASE_7_PLANETARY_DEFENSE.md`
+Current phase details: `project-specs/roadmap/PHASE_8_HARDENING.md` (not yet written)
 
 ---
 
@@ -191,4 +191,4 @@ Current phase details: `project-specs/roadmap/PHASE_7_PLANETARY_DEFENSE.md`
 - Three.js orbital viz is Phase 6 scope, not earlier; `@types/three` IS required (three@0.183.x ships no .d.ts)
 - Apophis 2029 is a hand-crafted featured case study in Phase 7
 
-*Last updated: 2026-03-17 — Phase 7 in progress (Steps 1–4 + 6 complete ✓). 158 tests passing (144 server + 14 client Vitest). Phase 7 shipped so far: 3 defense API endpoints (`/api/defense/pha|upcoming|apophis`); shared types `PhaListItem/UpcomingApproach/ApophisDetail`; Defense Watch dashboard (`/defense`) with PHA list + upcoming approaches + 30/90/365-day filter; Apophis 2029 feature page (`/defense/apophis`) with hand-crafted editorial, live countdown, orbital canvas, physical profile; nav wiring (bottom nav "Defense" replaces "Plan"; sidebar "Defense Watch" added); stale past-approach-date fix for search sort + upcoming filter. Remaining: Step 5 (timeline component) + Step 7 (client unit tests). See `project-specs/roadmap/PHASE_7_PLANETARY_DEFENSE.md`.*
+*Last updated: 2026-03-18 — Phase 7 complete ✓. 176 tests passing. Phase 7 shipped: 3 defense API endpoints + `GET /api/defense/risk/:nasaId`; shared types `PhaListItem/UpcomingApproach/ApophisDetail/DefenseRiskResponse`; Defense Watch dashboard (`/defense`) with PHA list + upcoming approaches + 30/90/365-day filter + 20-per-page pagination; Apophis 2029 feature page (`/defense/apophis`) with hand-crafted editorial, live countdown, orbital canvas with animated orbit, AI Risk Assessor section, close approach timeline; `ApproachTimelineComponent` (table layout); timeline embedded in dossier + analysis pages; Apophis nasa_id corrected to `2099942`; deduplication script; asteroid display names fixed across all cards/pages (name → designation → nasa_id with nasa_id subline). Phase 8 (Hardening & Deployment) is next.*

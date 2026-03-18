@@ -17,7 +17,7 @@
 
 import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
-import { getPhaList, getUpcomingApproaches, getApophis } from '../services/defenseService.js';
+import { getPhaList, getUpcomingApproaches, getApophis, getRiskAssessment } from '../services/defenseService.js';
 import { ValidationError } from '../errors/AppError.js';
 
 const router = Router();
@@ -59,6 +59,18 @@ router.get('/apophis', async (_req: Request, res: Response, next: NextFunction) 
   try {
     const apophis = await getApophis();
     res.json(apophis);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ── GET /api/defense/risk/:nasaId ─────────────────────────────────────────────
+
+router.get('/risk/:nasaId', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { nasaId } = req.params as { nasaId: string };
+    const result = await getRiskAssessment(nasaId);
+    res.json(result);
   } catch (err) {
     next(err);
   }

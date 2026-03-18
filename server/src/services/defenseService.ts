@@ -7,12 +7,22 @@
 
 import { supabase } from '../db/supabase.js';
 import { DatabaseError, NotFoundError } from '../errors/AppError.js';
-import type { PhaListItem, UpcomingApproach, ApophisDetail } from '../../../shared/types.js';
+import type { PhaListItem, UpcomingApproach, ApophisDetail, RiskOutput } from '../../../shared/types.js';
+import { getAsteroidByNasaId } from './asteroidService.js';
 import type { AsteroidRow } from './asteroidService.js';
 
+export interface DefenseRiskResponse {
+  nasaId: string;
+  asteroidName: string | null;
+  analysisId: string;
+  analysisCreatedAt: string;
+  riskOutput: RiskOutput;
+}
+
 // Columns for PHA list and upcoming approaches
+// Include 'id' so we can join with the analyses table for hazard_rating.
 const PHA_COLUMNS = [
-  'nasa_id', 'name', 'full_name', 'is_sentry_object',
+  'id', 'nasa_id', 'name', 'full_name', 'is_sentry_object',
   'diameter_min_km', 'diameter_max_km', 'absolute_magnitude_h',
   'min_orbit_intersection_au',
   'next_approach_date', 'next_approach_miss_km',
@@ -35,7 +45,7 @@ const APOPHIS_COLUMNS = [
   'closest_approach_date', 'closest_approach_au',
 ].join(', ');
 
-const APOPHIS_NASA_ID = '99942';
+const APOPHIS_NASA_ID = '2099942';
 
 // ── getPhaList ─────────────────────────────────────────────────────────────────
 
@@ -56,7 +66,34 @@ export async function getPhaList(): Promise<PhaListItem[]> {
     throw new DatabaseError(`Failed to fetch PHA list: ${error.message}`);
   }
 
-  const rows = (data ?? []) as Partial<AsteroidRow>[];
+  const rows = (data ?? []) as Partial<AsteroidRow & { id: string }>[];
+  if (rows.length === 0) return [];
+
+  // Fetch the latest risk_output for each PHA from the analyses table.
+  // A second query is cheaper than N per-card lookups on the frontend.
+  const asteroidIds = rows.map((r) => r.id).filter((id): id is string => !!id);
+  const riskMap = new Map<string, RiskOutput['planetaryDefense']['hazardRating']>();
+
+  if (asteroidIds.length > 0) {
+    const { data: analyses } = await supabase
+      .from('analyses')
+      .select('asteroid_id, risk_output')
+      .in('asteroid_id', asteroidIds)
+      .in('status', ['complete', 'handoff'])
+      .not('risk_output', 'is', null)
+      .order('created_at', { ascending: false });
+
+    // Build asteroid_id → hazard_rating map; keep only the most recent per asteroid.
+    for (const row of (analyses ?? []) as { asteroid_id: string; risk_output: unknown }[]) {
+      if (!riskMap.has(row.asteroid_id)) {
+        const ro = row.risk_output as RiskOutput | null;
+        if (ro?.planetaryDefense?.hazardRating) {
+          riskMap.set(row.asteroid_id, ro.planetaryDefense.hazardRating);
+        }
+      }
+    }
+  }
+
   return rows.map((row) => ({
     nasa_id: row.nasa_id ?? '',
     name: row.name ?? null,
@@ -70,8 +107,47 @@ export async function getPhaList(): Promise<PhaListItem[]> {
     next_approach_miss_km: row.next_approach_miss_km ?? null,
     closest_approach_date: row.closest_approach_date ?? null,
     closest_approach_au: row.closest_approach_au ?? null,
-    hazard_rating: null, // AI analysis not yet surfaced here — populated in future phase
+    hazard_rating: riskMap.get(row.id ?? '') ?? null,
   }));
+}
+
+// ── getRiskAssessment ──────────────────────────────────────────────────────────
+
+export async function getRiskAssessment(nasaId: string): Promise<DefenseRiskResponse> {
+  // Resolve the asteroid UUID from its nasa_id.
+  const asteroid = await getAsteroidByNasaId(nasaId);
+
+  const { data, error } = await supabase
+    .from('analyses')
+    .select('id, asteroid_id, risk_output, created_at')
+    .eq('asteroid_id', asteroid.id)
+    .in('status', ['complete', 'handoff'])
+    .not('risk_output', 'is', null)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') {
+      throw new NotFoundError(`No risk assessment found for asteroid ${nasaId}`);
+    }
+    throw new DatabaseError(`Failed to fetch risk assessment: ${error.message}`);
+  }
+
+  const row = data as { id: string; risk_output: unknown; created_at: string };
+  const riskOutput = row.risk_output as RiskOutput;
+
+  if (!riskOutput?.planetaryDefense) {
+    throw new NotFoundError(`No risk assessment found for asteroid ${nasaId}`);
+  }
+
+  return {
+    nasaId,
+    asteroidName: asteroid.name ?? asteroid.full_name ?? null,
+    analysisId: row.id,
+    analysisCreatedAt: row.created_at,
+    riskOutput,
+  };
 }
 
 // ── getUpcomingApproaches ──────────────────────────────────────────────────────
@@ -118,7 +194,7 @@ export async function getApophis(): Promise<ApophisDetail> {
 
   if (error) {
     if (error.code === 'PGRST116') {
-      throw new NotFoundError('Apophis (99942) not found in database');
+      throw new NotFoundError('Apophis (2099942) not found in database');
     }
     throw new DatabaseError(`Failed to fetch Apophis: ${error.message}`);
   }

@@ -13,9 +13,9 @@ import { supabase } from '../../src/db/supabase.js';
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
 const PHA_ROW = {
-  nasa_id: '99942',
+  nasa_id: '2099942',
   name: 'Apophis',
-  full_name: '(99942) Apophis',
+  full_name: '(2099942) Apophis',
   is_sentry_object: false,
   diameter_min_km: 0.31,
   diameter_max_km: 0.37,
@@ -40,9 +40,9 @@ const UPCOMING_ROW = {
 };
 
 const APOPHIS_ROW = {
-  nasa_id: '99942',
+  nasa_id: '2099942',
   name: 'Apophis',
-  full_name: '(99942) Apophis',
+  full_name: '(2099942) Apophis',
   is_pha: true,
   is_sentry_object: false,
   diameter_min_km: 0.31,
@@ -62,17 +62,27 @@ const APOPHIS_ROW = {
   closest_approach_au: 0.000254,
 };
 
+// Mimic a Supabase query builder: every method returns `this`, and the object
+// is thenable — awaiting it (or any suffix of the chain) resolves with `resolves`.
 function mockChain(resolves: { data: unknown; error: unknown }) {
-  return {
+  const p = Promise.resolve(resolves);
+  const chain = {
     select: vi.fn().mockReturnThis(),
-    eq: vi.fn().mockReturnThis(),
-    or: vi.fn().mockReturnThis(),
-    gt: vi.fn().mockReturnThis(),
-    gte: vi.fn().mockReturnThis(),
-    lte: vi.fn().mockReturnThis(),
-    order: vi.fn().mockResolvedValue(resolves),
-    single: vi.fn().mockResolvedValue(resolves),
+    eq:     vi.fn().mockReturnThis(),
+    or:     vi.fn().mockReturnThis(),
+    gt:     vi.fn().mockReturnThis(),
+    gte:    vi.fn().mockReturnThis(),
+    lte:    vi.fn().mockReturnThis(),
+    in:     vi.fn().mockReturnThis(),
+    not:    vi.fn().mockReturnThis(),
+    limit:  vi.fn().mockReturnThis(),
+    order:  vi.fn().mockReturnThis(),
+    single: vi.fn().mockReturnThis(),
+    // Thenable — allows `await chain`, `await chain.order()`, `await chain.single()`, etc.
+    then:   p.then.bind(p),
+    catch:  p.catch.bind(p),
   };
+  return chain;
 }
 
 // ── GET /api/defense/pha ──────────────────────────────────────────────────────
@@ -98,7 +108,7 @@ describe('GET /api/defense/pha', () => {
     const res = await request(app).get('/api/defense/pha');
     expect(res.status).toBe(200);
     const item = res.body.data[0] as Record<string, unknown>;
-    expect(item['nasa_id']).toBe('99942');
+    expect(item['nasa_id']).toBe('2099942');
     expect(item['next_approach_date']).toBe('2029-04-13');
     expect(item['hazard_rating']).toBeNull();
   });
@@ -185,7 +195,7 @@ describe('GET /api/defense/apophis', () => {
     const res = await request(app).get('/api/defense/apophis');
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({
-      nasa_id: '99942',
+      nasa_id: '2099942',
       name: 'Apophis',
       is_pha: true,
       next_approach_date: '2029-04-13',
@@ -208,6 +218,87 @@ describe('GET /api/defense/apophis', () => {
     );
 
     const res = await request(app).get('/api/defense/apophis');
+    expect(res.status).toBe(500);
+  });
+});
+
+// ── GET /api/defense/risk/:nasaId ─────────────────────────────────────────────
+
+const RISK_OUTPUT = {
+  planetaryDefense: {
+    isPHA: true,
+    hazardRating: 'none',
+    monitoringStatus: 'Confirmed safe through 2100',
+    notableApproaches: [
+      { close_approach_date: '2029-04-13', miss_distance_km: 38017, orbiting_body: 'Earth' },
+    ],
+    mitigationContext: 'No mitigation required.',
+  },
+  missionRisk: {
+    overallRating: 'low',
+    communicationDelayMinutes: { min: 1, max: 2 },
+    surfaceConditions: 'Rocky surface',
+    primaryRisks: [],
+  },
+  dataCompleteness: 0.9,
+  assumptionsRequired: [],
+  reasoning: 'Well-characterized orbit.',
+  sources: ['nasa-cad'],
+};
+
+const RISK_ANALYSIS_ROW = {
+  id: 'aaaabbbb-0000-0000-0000-000000000001',
+  asteroid_id: 'aaaabbbb-0000-0000-0000-000000000002',
+  risk_output: RISK_OUTPUT,
+  created_at: '2026-03-17T12:00:00Z',
+};
+
+const APOPHIS_FULL_ROW = { ...APOPHIS_ROW, id: 'aaaabbbb-0000-0000-0000-000000000002' };
+
+describe('GET /api/defense/risk/:nasaId', () => {
+  beforeEach(() => vi.resetAllMocks());
+
+  it('returns 200 with risk output when a completed analysis exists', async () => {
+    vi.mocked(supabase.from)
+      .mockReturnValueOnce(mockChain({ data: APOPHIS_FULL_ROW, error: null }) as never)
+      .mockReturnValueOnce(mockChain({ data: RISK_ANALYSIS_ROW, error: null }) as never);
+
+    const res = await request(app).get('/api/defense/risk/2099942');
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      nasaId: '2099942',
+      asteroidName: 'Apophis',
+      analysisId: RISK_ANALYSIS_ROW.id,
+    });
+    expect(res.body.riskOutput.planetaryDefense.hazardRating).toBe('none');
+  });
+
+  it('returns 404 when no completed analysis exists', async () => {
+    vi.mocked(supabase.from)
+      .mockReturnValueOnce(mockChain({ data: APOPHIS_FULL_ROW, error: null }) as never)
+      .mockReturnValueOnce(
+        mockChain({ data: null, error: { code: 'PGRST116', message: 'not found' } }) as never,
+      );
+
+    const res = await request(app).get('/api/defense/risk/2099942');
+    expect(res.status).toBe(404);
+  });
+
+  it('returns 404 when the asteroid itself is not found', async () => {
+    vi.mocked(supabase.from).mockReturnValue(
+      mockChain({ data: null, error: { code: 'PGRST116', message: 'not found' } }) as never,
+    );
+
+    const res = await request(app).get('/api/defense/risk/unknown-id');
+    expect(res.status).toBe(404);
+  });
+
+  it('returns 500 on database error fetching the asteroid', async () => {
+    vi.mocked(supabase.from).mockReturnValue(
+      mockChain({ data: null, error: { code: 'OTHER', message: 'db down' } }) as never,
+    );
+
+    const res = await request(app).get('/api/defense/risk/2099942');
     expect(res.status).toBe(500);
   });
 });

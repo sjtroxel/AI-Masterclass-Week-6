@@ -15,6 +15,8 @@ export { formatMissDistance, formatDate, daysUntil };
 type ActiveTab = 'pha' | 'upcoming';
 type DaysFilter = 30 | 90 | 365;
 
+const PAGE_SIZE = 20;
+
 @Component({
   selector: 'app-defense-watch',
   standalone: true,
@@ -112,7 +114,7 @@ type DaysFilter = 30 | 90 | 365;
               {{ phaCount() }} potentially hazardous asteroids · sorted by next approach date
             </p>
             <div class="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
-              @for (pha of phas(); track pha.nasa_id) {
+              @for (pha of pagedPhas(); track pha.nasa_id) {
                 <div class="bg-space-900 border border-space-700 rounded-xl p-4
                             hover:border-space-600 transition-colors">
                   <div class="flex items-start justify-between gap-2 mb-3">
@@ -120,7 +122,9 @@ type DaysFilter = 30 | 90 | 365;
                       <h3 class="text-sm font-semibold text-white truncate">
                         {{ pha.name ?? pha.full_name ?? pha.nasa_id }}
                       </h3>
-                      <p class="text-xs text-space-400 mt-0.5 truncate">{{ pha.full_name ?? pha.nasa_id }}</p>
+                      @if ((pha.name ?? pha.full_name ?? pha.nasa_id) !== pha.nasa_id) {
+                        <p class="text-xs text-space-400 font-mono mt-0.5 truncate">{{ pha.nasa_id }}</p>
+                      }
                     </div>
                     <div class="flex flex-col items-end gap-1 shrink-0">
                       @if (pha.is_sentry_object) {
@@ -192,6 +196,27 @@ type DaysFilter = 30 | 90 | 365;
                 </div>
               }
             </div>
+            @if (phaTotalPages() > 1) {
+              <div class="mt-6 flex items-center justify-between">
+                <p class="text-space-400 text-sm">
+                  Page {{ phaPage() }} of {{ phaTotalPages() }}
+                </p>
+                <div class="flex gap-2">
+                  <button (click)="phaPagePrev()" [disabled]="phaPage() <= 1"
+                          class="px-4 py-2 bg-space-800 hover:bg-space-700 text-white text-sm
+                                 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed
+                                 min-h-[44px]">
+                    Previous
+                  </button>
+                  <button (click)="phaPageNext()" [disabled]="phaPage() >= phaTotalPages()"
+                          class="px-4 py-2 bg-space-800 hover:bg-space-700 text-white text-sm
+                                 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed
+                                 min-h-[44px]">
+                    Next
+                  </button>
+                </div>
+              </div>
+            }
           }
         </div>
       }
@@ -235,7 +260,7 @@ type DaysFilter = 30 | 90 | 365;
               {{ upcomingApproaches().length }} approaches in the next {{ selectedDays() }} days
             </p>
             <div class="space-y-2">
-              @for (approach of upcomingApproaches(); track approach.nasa_id + approach.next_approach_date) {
+              @for (approach of pagedUpcoming(); track approach.nasa_id + approach.next_approach_date) {
                 <a [routerLink]="['/dossier', approach.nasa_id]"
                    class="flex items-center gap-3 bg-space-900 border border-space-700 rounded-xl
                           px-4 py-3 hover:border-space-600 hover:bg-space-800/50
@@ -295,6 +320,27 @@ type DaysFilter = 30 | 90 | 365;
                 </a>
               }
             </div>
+            @if (upcomingTotalPages() > 1) {
+              <div class="mt-6 flex items-center justify-between">
+                <p class="text-space-400 text-sm">
+                  Page {{ upcomingPage() }} of {{ upcomingTotalPages() }}
+                </p>
+                <div class="flex gap-2">
+                  <button (click)="upcomingPagePrev()" [disabled]="upcomingPage() <= 1"
+                          class="px-4 py-2 bg-space-800 hover:bg-space-700 text-white text-sm
+                                 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed
+                                 min-h-[44px]">
+                    Previous
+                  </button>
+                  <button (click)="upcomingPageNext()" [disabled]="upcomingPage() >= upcomingTotalPages()"
+                          class="px-4 py-2 bg-space-800 hover:bg-space-700 text-white text-sm
+                                 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed
+                                 min-h-[44px]">
+                    Next
+                  </button>
+                </div>
+              </div>
+            }
           }
         </div>
       }
@@ -312,10 +358,22 @@ export class DefenseWatchComponent implements OnInit {
   readonly phaError = signal(false);
   readonly phas = signal<PhaListItem[]>([]);
   readonly phaCount = computed(() => this.phas().length || null);
+  readonly phaPage = signal(1);
+  readonly phaTotalPages = computed(() => Math.ceil(this.phas().length / PAGE_SIZE));
+  readonly pagedPhas = computed(() => {
+    const p = this.phaPage();
+    return this.phas().slice((p - 1) * PAGE_SIZE, p * PAGE_SIZE);
+  });
 
   readonly upcomingLoading = signal(false);
   readonly upcomingError = signal(false);
   readonly upcomingApproaches = signal<UpcomingApproach[]>([]);
+  readonly upcomingPage = signal(1);
+  readonly upcomingTotalPages = computed(() => Math.ceil(this.upcomingApproaches().length / PAGE_SIZE));
+  readonly pagedUpcoming = computed(() => {
+    const p = this.upcomingPage();
+    return this.upcomingApproaches().slice((p - 1) * PAGE_SIZE, p * PAGE_SIZE);
+  });
 
   readonly dayOptions: DaysFilter[] = [30, 90, 365];
 
@@ -329,8 +387,14 @@ export class DefenseWatchComponent implements OnInit {
 
   setDaysFilter(days: DaysFilter): void {
     this.selectedDays.set(days);
+    this.upcomingPage.set(1);
     this.loadUpcoming(days);
   }
+
+  phaPagePrev(): void { if (this.phaPage() > 1) this.phaPage.update(p => p - 1); }
+  phaPageNext(): void { if (this.phaPage() < this.phaTotalPages()) this.phaPage.update(p => p + 1); }
+  upcomingPagePrev(): void { if (this.upcomingPage() > 1) this.upcomingPage.update(p => p - 1); }
+  upcomingPageNext(): void { if (this.upcomingPage() < this.upcomingTotalPages()) this.upcomingPage.update(p => p + 1); }
 
   daysUntilApproach(date: string | null): number | null {
     return daysUntil(date);

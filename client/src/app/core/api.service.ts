@@ -241,6 +241,14 @@ export interface DefenseListResponse<T> {
   total: number;
 }
 
+export interface DefenseRiskResponse {
+  nasaId: string;
+  asteroidName: string | null;
+  analysisId: string;
+  analysisCreatedAt: string;
+  riskOutput: RiskOutput;
+}
+
 export interface UpcomingResponse extends DefenseListResponse<UpcomingApproach> {
   days: number;
 }
@@ -479,5 +487,9 @@ export class ApiService {
 
   getApophis(): Observable<ApophisDetail> {
     return this.http.get<ApophisDetail>(`${this.base}/defense/apophis`);
+  }
+
+  getRiskAssessment(nasaId: string): Observable<DefenseRiskResponse> {
+    return this.http.get<DefenseRiskResponse>(`${this.base}/defense/risk/${nasaId}`);
   }
 }
