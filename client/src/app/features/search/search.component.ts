@@ -147,7 +147,7 @@ const SORT_OPTIONS: SortOption[] = [
         }
 
         <!-- Results area -->
-        <main class="flex-1 min-w-0 px-4 py-4 md:px-6 md:py-5">
+        <div class="flex-1 min-w-0 px-4 py-4 md:px-6 md:py-5">
 
           <!-- Sort control — browse mode only -->
           @if (svc.mode() === 'browse') {
@@ -258,7 +258,7 @@ const SORT_OPTIONS: SortOption[] = [
               }
             }
           }
-        </main>
+        </div>
       </div>
     </div>
   `,

@@ -368,6 +368,7 @@ import { MarkdownPipe } from '../../shared/pipes/markdown.pipe.js';
                       (keydown)="onKeydown($event)"
                       [disabled]="svc.isStreaming() || svc.sessionExpired()"
                       placeholder="Ask about asteroid science, etc.!"
+                      aria-label="Chat message input"
                       rows="1"
                       class="flex-1 px-4 py-3 bg-space-900 border border-space-700
                              hover:border-space-600 focus:border-nebula-500

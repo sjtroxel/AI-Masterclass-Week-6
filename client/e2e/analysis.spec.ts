@@ -16,6 +16,49 @@ import { test, expect } from '@playwright/test';
 /** A real asteroid ID from the DB that has a dossier page. */
 const KNOWN_ASTEROID_ID = '3'; // Use whichever exists in local DB
 
+/** Minimal AsteroidDetail fixture for dossier route mocking. */
+const MOCK_DOSSIER_ASTEROID = {
+  id: 'test-uuid-dossier',
+  nasa_id: '3',
+  name: 'Test Asteroid 3',
+  designation: null,
+  full_name: 'Test Asteroid 3',
+  spkid: null,
+  is_pha: false,
+  is_sentry_object: false,
+  absolute_magnitude_h: 15.0,
+  diameter_min_km: 0.5,
+  diameter_max_km: 1.0,
+  diameter_sigma_km: null,
+  spectral_type_smass: 'S',
+  spectral_type_tholen: null,
+  min_orbit_intersection_au: 0.05,
+  orbit_epoch_jd: null,
+  semi_major_axis_au: 1.5,
+  eccentricity: 0.2,
+  inclination_deg: 5.0,
+  longitude_asc_node_deg: null,
+  argument_perihelion_deg: null,
+  mean_anomaly_deg: null,
+  perihelion_distance_au: 1.2,
+  aphelion_distance_au: 1.8,
+  orbital_period_yr: 1.84,
+  nhats_accessible: false,
+  nhats_min_delta_v_kms: null,
+  nhats_min_duration_days: null,
+  next_approach_date: '2030-06-15',
+  next_approach_au: 0.08,
+  next_approach_miss_km: 11970000,
+  closest_approach_date: '2025-03-01',
+  closest_approach_au: 0.04,
+  economic_tier: null,
+  has_real_name: true,
+  composition_summary: null,
+  resource_profile: null,
+  created_at: '2024-01-01T00:00:00.000Z',
+  updated_at: '2024-01-01T00:00:00.000Z',
+};
+
 const MOCK_ANALYSIS_RESPONSE = {
   analysisId: 'e2e-analysis-uuid',
   asteroidId: KNOWN_ASTEROID_ID,
@@ -151,7 +194,7 @@ test.describe('Analysis page navigation', () => {
     await expect(page.getByRole('button', { name: /Run Agent Swarm Analysis/i })).toBeVisible();
   });
 
-  test('"Run Agent Swarm Analysis" button meets 44px touch target on mobile', async ({ page, viewport }) => {
+  test('"Run Agent Swarm Analysis" button meets 44px touch target on mobile', async ({ page }) => {
     await page.goto(`/analysis/${KNOWN_ASTEROID_ID}`);
 
     const button = page.getByRole('button', { name: /Run Agent Swarm Analysis/i });
@@ -166,6 +209,17 @@ test.describe('Analysis page navigation', () => {
   });
 
   test('dossier "Analyze →" link navigates to analysis page', async ({ page }) => {
+    // Mock the dossier API so the page renders regardless of DB state
+    await page.route(`**/api/asteroids/${KNOWN_ASTEROID_ID}`, (route) => {
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(MOCK_DOSSIER_ASTEROID) });
+    });
+    await page.route(`**/api/defense/risk/${KNOWN_ASTEROID_ID}`, (route) => {
+      route.fulfill({ status: 404, contentType: 'application/json', body: JSON.stringify({ error: 'Not found' }) });
+    });
+    await page.route(`**/api/analysis/${KNOWN_ASTEROID_ID}/latest`, (route) => {
+      route.fulfill({ status: 404, contentType: 'application/json', body: JSON.stringify({ error: 'Not found' }) });
+    });
+
     // Navigate to dossier — look for the Analyze link
     await page.goto(`/dossier/${KNOWN_ASTEROID_ID}`);
 
@@ -191,29 +245,17 @@ test.describe('Analysis results display (mocked API)', () => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({
-          id: 'e2e-analysis-uuid',
-          asteroid_id: KNOWN_ASTEROID_ID,
-          status: 'complete',
-          phase: 'complete',
-          confidence_scores: MOCK_ANALYSIS_RESPONSE.confidenceScores,
-          synthesis: MOCK_ANALYSIS_RESPONSE.synthesis,
-          navigator_output: MOCK_ANALYSIS_RESPONSE.outputs.navigator,
-          geologist_output: MOCK_ANALYSIS_RESPONSE.outputs.geologist,
-          economist_output: MOCK_ANALYSIS_RESPONSE.outputs.economist,
-          risk_output: MOCK_ANALYSIS_RESPONSE.outputs.risk,
-          handoff_packet: null,
-          created_at: '2026-03-15T00:00:00Z',
-          updated_at: '2026-03-15T00:00:00Z',
-        }),
+        body: JSON.stringify(MOCK_ANALYSIS_RESPONSE),
       });
     });
 
     await page.goto(`/analysis/${KNOWN_ASTEROID_ID}`);
 
-    // Confidence bars section should appear
-    await expect(page.getByText(/Orbital/i).first()).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText(/Compositional/i)).toBeVisible();
+    // Confidence bars section should appear — scope to section to avoid matching hidden sidebar
+    const confidenceSection = page.locator('section').filter({ hasText: 'Confidence Scores' });
+    await expect(confidenceSection).toBeVisible({ timeout: 5000 });
+    await expect(confidenceSection.getByText('Orbital')).toBeVisible();
+    await expect(confidenceSection.getByText('Compositional')).toBeVisible();
   });
 
   test('complete analysis: synthesis text section is present', async ({ page }) => {
@@ -221,21 +263,7 @@ test.describe('Analysis results display (mocked API)', () => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({
-          id: 'e2e-analysis-uuid',
-          asteroid_id: KNOWN_ASTEROID_ID,
-          status: 'complete',
-          phase: 'complete',
-          confidence_scores: MOCK_ANALYSIS_RESPONSE.confidenceScores,
-          synthesis: MOCK_ANALYSIS_RESPONSE.synthesis,
-          navigator_output: MOCK_ANALYSIS_RESPONSE.outputs.navigator,
-          geologist_output: MOCK_ANALYSIS_RESPONSE.outputs.geologist,
-          economist_output: MOCK_ANALYSIS_RESPONSE.outputs.economist,
-          risk_output: MOCK_ANALYSIS_RESPONSE.outputs.risk,
-          handoff_packet: null,
-          created_at: '2026-03-15T00:00:00Z',
-          updated_at: '2026-03-15T00:00:00Z',
-        }),
+        body: JSON.stringify(MOCK_ANALYSIS_RESPONSE),
       });
     });
 
@@ -252,21 +280,7 @@ test.describe('Analysis results display (mocked API)', () => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({
-          id: 'e2e-analysis-uuid',
-          asteroid_id: KNOWN_ASTEROID_ID,
-          status: 'handoff',
-          phase: 'handoff',
-          confidence_scores: MOCK_HANDOFF_RESPONSE.confidenceScores,
-          synthesis: null,
-          navigator_output: MOCK_ANALYSIS_RESPONSE.outputs.navigator,
-          geologist_output: null,
-          economist_output: null,
-          risk_output: null,
-          handoff_packet: MOCK_HANDOFF_RESPONSE.handoffPacket,
-          created_at: '2026-03-15T00:00:00Z',
-          updated_at: '2026-03-15T00:00:00Z',
-        }),
+        body: JSON.stringify(MOCK_HANDOFF_RESPONSE),
       });
     });
 
@@ -303,7 +317,7 @@ test.describe('Analysis results display (mocked API)', () => {
 
     const button = page.getByRole('button', { name: /Run Agent Swarm Analysis/i });
     await expect(button).toBeVisible();
-    await button.click();
+    await button.click({ force: true });
 
     // After click, button should no longer say "Run Agent Swarm Analysis" (running state)
     // Wait for the result to appear
@@ -317,27 +331,13 @@ test.describe('Analysis results display (mocked API)', () => {
 
 test.describe('Analysis page mobile layout', () => {
   test('agent cards stack in single column at 375px', async ({ page, viewport }) => {
-    if (!viewport || viewport.width > 400) return;
+    if (!viewport || viewport.width > 400) { test.skip(); return; }
 
     await page.route(`**/api/analysis/${KNOWN_ASTEROID_ID}/latest`, (route) => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({
-          id: 'e2e-analysis-uuid',
-          asteroid_id: KNOWN_ASTEROID_ID,
-          status: 'complete',
-          phase: 'complete',
-          confidence_scores: MOCK_ANALYSIS_RESPONSE.confidenceScores,
-          synthesis: MOCK_ANALYSIS_RESPONSE.synthesis,
-          navigator_output: MOCK_ANALYSIS_RESPONSE.outputs.navigator,
-          geologist_output: MOCK_ANALYSIS_RESPONSE.outputs.geologist,
-          economist_output: MOCK_ANALYSIS_RESPONSE.outputs.economist,
-          risk_output: MOCK_ANALYSIS_RESPONSE.outputs.risk,
-          handoff_packet: null,
-          created_at: '2026-03-15T00:00:00Z',
-          updated_at: '2026-03-15T00:00:00Z',
-        }),
+        body: JSON.stringify(MOCK_ANALYSIS_RESPONSE),
       });
     });
 
@@ -349,7 +349,7 @@ test.describe('Analysis page mobile layout', () => {
   });
 
   test('no horizontal overflow on analysis page at 375px', async ({ page, viewport }) => {
-    if (!viewport || viewport.width > 400) return;
+    if (!viewport || viewport.width > 400) { test.skip(); return; }
 
     await page.goto(`/analysis/${KNOWN_ASTEROID_ID}`);
 

@@ -71,14 +71,14 @@ test.describe('Mission Planning page', () => {
 
     // Mode selector buttons
     for (const label of ['Scenario', 'Compare', 'Portfolio']) {
-      await expect(page.getByRole('button', { name: label })).toBeVisible();
+      await expect(page.getByRole('button', { name: label, exact: true })).toBeVisible();
     }
 
     // Asteroid IDs textarea
     await expect(page.locator('textarea#asteroid-ids')).toBeVisible();
 
-    // Submit button
-    await expect(page.getByRole('button', { name: /Build Scenario|Compare|Build Portfolio/i })).toBeVisible();
+    // Submit button — "Build Scenario (0 asteroids)" is the initial disabled state
+    await expect(page.getByRole('button', { name: 'Build Scenario (0 asteroids)' })).toBeVisible();
   });
 
   test('submit button is disabled with no asteroid IDs entered', async ({ page }) => {
@@ -120,10 +120,10 @@ test.describe('Mission Planning page', () => {
 
     // Top pick banner
     await expect(page.getByText('Top pick')).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText('433 Eros')).toBeVisible();
+    await expect(page.getByText('433 Eros').first()).toBeVisible();
 
     // Ranked card
-    await expect(page.getByText('Well-characterized S-type')).toBeVisible();
+    await expect(page.getByText('Well-characterized S-type').first()).toBeVisible();
   });
 
   test('portfolio mode: submitting shows portfolio summary (mocked)', async ({ page }) => {
@@ -203,18 +203,18 @@ test.describe('Mission Planning page', () => {
 
 test.describe('Mission planning mobile layout', () => {
   test('no horizontal overflow at 375px', async ({ page, viewport }) => {
-    if (!viewport || viewport.width > 400) return;
+    if (!viewport || viewport.width > 400) { test.skip(); return; }
     await page.goto('/mission-planning');
     const bodyScrollWidth = await page.evaluate(() => document.body.scrollWidth);
     expect(bodyScrollWidth).toBeLessThanOrEqual(viewport.width + 1);
   });
 
   test('all interactive elements meet 44px touch target', async ({ page, viewport }) => {
-    if (!viewport || viewport.width > 400) return;
+    if (!viewport || viewport.width > 400) { test.skip(); return; }
     await page.goto('/mission-planning');
 
     for (const label of ['Scenario', 'Compare', 'Portfolio']) {
-      const btn = page.getByRole('button', { name: label });
+      const btn = page.getByRole('button', { name: label, exact: true });
       const box = await btn.boundingBox();
       if (box) expect(box.height).toBeGreaterThanOrEqual(44);
     }
@@ -245,7 +245,7 @@ test.describe('Orbital Canvas page', () => {
   });
 
   test('no horizontal overflow at 375px', async ({ page, viewport }) => {
-    if (!viewport || viewport.width > 400) return;
+    if (!viewport || viewport.width > 400) { test.skip(); return; }
 
     await page.route('**/api/asteroids*', (route) => {
       route.fulfill({
@@ -265,7 +265,7 @@ test.describe('Orbital Canvas page', () => {
 
 test.describe('Phase 6 nav links', () => {
   test('Plan link in bottom nav navigates to mission-planning (mobile)', async ({ page, viewport }) => {
-    if (!viewport || viewport.width > 400) return;
+    if (!viewport || viewport.width > 400) { test.skip(); return; }
 
     await page.goto('/search');
     const nav = page.locator('nav').filter({ hasText: 'Plan' }).last();

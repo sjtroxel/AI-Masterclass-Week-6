@@ -1,4 +1,4 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
 /**
  * Playwright E2E configuration.
@@ -26,8 +26,10 @@ export default defineConfig({
     {
       name: 'mobile',
       use: {
-        ...devices['iPhone SE'],
+        browserName: 'chromium',
         viewport: { width: 375, height: 812 },
+        isMobile: true,
+        hasTouch: true,
       },
     },
     {
