@@ -75,7 +75,7 @@ export class AnalystService {
       });
 
       if (!res.ok) {
-        throw new Error(`Failed to start session: ${res.status}`);
+        throw new Error('Unable to connect to the Analyst. Please try again.');
       }
 
       const data = await res.json() as { session_token: string };
@@ -146,7 +146,7 @@ export class AnalystService {
       }
 
       if (!res.ok || !res.body) {
-        throw new Error(`Request failed: ${res.status}`);
+        throw new Error('Connection lost. Please try sending your message again.');
       }
 
       const reader = res.body.getReader();
@@ -173,7 +173,7 @@ export class AnalystService {
         }
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Stream failed';
+      const msg = err instanceof Error ? err.message : 'Stream connection lost. Please try again.';
       this.updateMessage(assistantId, (m) => ({
         ...m,
         text: m.text || `Error: ${msg}`,

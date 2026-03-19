@@ -208,10 +208,15 @@ export class OrbitalCanvasComponent implements AfterViewInit {
         const width = host.clientWidth || 375;
         const height = this.canvasHeight();
 
-        // Renderer
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        // Renderer — reduced quality on mobile to hit 30fps target
+        const isMobile = window.innerWidth < 768;
+        const renderer = new THREE.WebGLRenderer({
+          antialias: !isMobile,
+          alpha: false,
+          powerPreference: isMobile ? 'low-power' : 'high-performance',
+        });
         renderer.setSize(width, height);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1 : 2));
         renderer.setClearColor(0x030712, 1); // space-950
         host.appendChild(renderer.domElement);
         this.renderer = renderer;
@@ -271,13 +276,17 @@ export class OrbitalCanvasComponent implements AfterViewInit {
         ro.observe(host);
         this.destroyRef.onDestroy(() => ro.disconnect());
 
-        // Animation loop
-        const animate = () => {
+        // Animation loop — capped at 30fps on mobile to reduce battery draw
+        const targetFrameMs = isMobile ? 1000 / 30 : 0; // 33ms cap; 0 = uncapped
+        let lastFrameTime = 0;
+        const animate = (timestamp: number) => {
           this.rafId = requestAnimationFrame(animate);
+          if (targetFrameMs > 0 && timestamp - lastFrameTime < targetFrameMs) return;
+          lastFrameTime = timestamp;
           controls.update();
           renderer.render(scene, this.camera!);
         };
-        animate();
+        requestAnimationFrame(animate);
 
         this.zone.run(() => this.sceneReady.set(true));
       } catch (err) {

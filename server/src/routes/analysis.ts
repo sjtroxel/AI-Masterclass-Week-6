@@ -22,6 +22,7 @@ import { runOrchestrator } from '../services/orchestrator/orchestrator.js';
 import { supabase } from '../db/supabase.js';
 import { getAsteroidByNasaId, getAsteroidById } from '../services/asteroidService.js';
 import { ValidationError, DatabaseError, NotFoundError } from '../errors/AppError.js';
+import { cacheFor } from '../middleware/cache.js';
 import type { MissionParams, AgentType } from '../../../shared/types.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -99,7 +100,7 @@ router.post('/:asteroidId', async (req: Request, res: Response, next: NextFuncti
 
 // ── GET /api/analysis/:asteroidId/latest ──────────────────────────────────────
 
-router.get('/:asteroidId/latest', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/:asteroidId/latest', cacheFor(5 * 60), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { asteroidId: rawId } = req.params as { asteroidId: string };
     const asteroidId = await resolveAsteroidUuid(rawId);

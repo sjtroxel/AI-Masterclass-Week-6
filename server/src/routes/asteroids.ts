@@ -8,13 +8,14 @@ import {
 } from '../services/asteroidService.js';
 import { searchAsteroids } from '../services/searchService.js';
 import { ValidationError } from '../errors/AppError.js';
+import { cacheFor } from '../middleware/cache.js';
 
 const router = Router();
 
 // GET /api/asteroids/search?q=&count=&threshold=
 // Semantic search via Voyage AI embeddings + pgvector.
 // Must be registered before /:id so Express doesn't treat "search" as an id.
-router.get('/search', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/search', cacheFor(2 * 60), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const q = req.query['q'];
     if (typeof q !== 'string' || q.trim().length === 0) {
@@ -38,7 +39,7 @@ router.get('/search', async (req: Request, res: Response, next: NextFunction) =>
 
 // GET /api/asteroids
 // Query params: page, per_page, is_pha, nhats_accessible, spectral_type
-router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/', cacheFor(5 * 60), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const page = Math.max(1, parseInt(String(req.query['page'] ?? '1'), 10));
     const perPage = Math.min(
@@ -79,7 +80,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 
 // GET /api/asteroids/:id
 // :id can be either the internal UUID or a NASA integer ID
-router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/:id', cacheFor(10 * 60), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const rawId = req.params['id'];
     // Express 5 types allow string | string[]; route params are always scalar strings.

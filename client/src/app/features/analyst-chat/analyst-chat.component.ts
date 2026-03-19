@@ -116,10 +116,19 @@ import { MarkdownPipe } from '../../shared/pipes/markdown.pipe.js';
                     rounded-lg bg-hazard-500/10 border border-hazard-500/30
                     px-4 py-2.5 flex items-center justify-between gap-3">
           <p class="text-xs text-hazard-400">{{ svc.error() }}</p>
-          <button (click)="svc.error.set(null)"
-                  class="text-xs text-space-400 hover:text-white transition-colors min-h-[44px] px-2">
-            ✕
-          </button>
+          @if (!svc.hasSession()) {
+            <button (click)="initSession()"
+                    class="shrink-0 text-xs text-hazard-300 hover:text-white font-medium
+                           border border-hazard-500/40 hover:border-hazard-400/60
+                           rounded-lg px-3 py-1.5 transition-colors min-h-[44px]">
+              Try again
+            </button>
+          } @else {
+            <button (click)="svc.error.set(null)"
+                    class="text-xs text-space-400 hover:text-white transition-colors min-h-[44px] px-2">
+              ✕
+            </button>
+          }
         </div>
       }
 

@@ -19,12 +19,13 @@ import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import { getPhaList, getUpcomingApproaches, getApophis, getRiskAssessment } from '../services/defenseService.js';
 import { ValidationError } from '../errors/AppError.js';
+import { cacheFor } from '../middleware/cache.js';
 
 const router = Router();
 
 // ── GET /api/defense/pha ──────────────────────────────────────────────────────
 
-router.get('/pha', async (_req: Request, res: Response, next: NextFunction) => {
+router.get('/pha', cacheFor(10 * 60), async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const phas = await getPhaList();
     res.json({ data: phas, total: phas.length });
@@ -35,7 +36,7 @@ router.get('/pha', async (_req: Request, res: Response, next: NextFunction) => {
 
 // ── GET /api/defense/upcoming ─────────────────────────────────────────────────
 
-router.get('/upcoming', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/upcoming', cacheFor(5 * 60), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const rawDays = req.query['days'];
     let days = 365;
@@ -55,7 +56,7 @@ router.get('/upcoming', async (req: Request, res: Response, next: NextFunction) 
 
 // ── GET /api/defense/apophis ──────────────────────────────────────────────────
 
-router.get('/apophis', async (_req: Request, res: Response, next: NextFunction) => {
+router.get('/apophis', cacheFor(60 * 60), async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const apophis = await getApophis();
     res.json(apophis);
@@ -66,7 +67,7 @@ router.get('/apophis', async (_req: Request, res: Response, next: NextFunction) 
 
 // ── GET /api/defense/risk/:nasaId ─────────────────────────────────────────────
 
-router.get('/risk/:nasaId', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/risk/:nasaId', cacheFor(5 * 60), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { nasaId } = req.params as { nasaId: string };
     const result = await getRiskAssessment(nasaId);

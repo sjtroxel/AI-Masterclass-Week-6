@@ -102,12 +102,41 @@ const PAGE_SIZE = 20;
         <div class="px-4 py-4 md:px-8">
 
           @if (phaLoading()) {
-            <div class="flex items-center justify-center py-16">
-              <div class="text-space-400 text-sm">Loading PHA data…</div>
+            <div class="space-y-3 md:grid md:grid-cols-2 md:gap-3 md:space-y-0">
+              @for (n of skeletonItems; track n) {
+                <div class="bg-space-900 border border-space-700 rounded-xl p-4 animate-pulse">
+                  <div class="flex items-start justify-between gap-2 mb-3">
+                    <div class="space-y-1.5">
+                      <div class="h-3.5 w-32 bg-space-800 rounded"></div>
+                      <div class="h-3 w-20 bg-space-800/60 rounded"></div>
+                    </div>
+                    <div class="h-5 w-14 bg-space-800 rounded-full"></div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-2">
+                    @for (cell of [1,2,3,4]; track cell) {
+                      <div class="space-y-1">
+                        <div class="h-2.5 w-16 bg-space-800/60 rounded"></div>
+                        <div class="h-3 w-20 bg-space-800 rounded"></div>
+                      </div>
+                    }
+                  </div>
+                  <div class="mt-3 flex gap-2">
+                    <div class="flex-1 h-9 bg-space-800 rounded-lg"></div>
+                    <div class="flex-1 h-9 bg-space-800/70 rounded-lg"></div>
+                  </div>
+                </div>
+              }
             </div>
           } @else if (phaError()) {
-            <div class="rounded-xl border border-red-800/50 bg-red-950/30 px-4 py-4 text-sm text-red-300">
-              Failed to load PHA list. Please try again.
+            <div class="rounded-xl border border-red-800/50 bg-red-950/30 px-4 py-4 text-sm text-red-300
+                        flex items-center justify-between gap-3">
+              <p>Couldn't load the hazardous asteroid list — the NASA API may be temporarily unavailable.</p>
+              <button (click)="retryPhas()"
+                      class="shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg
+                             bg-red-900/50 hover:bg-red-900/80 border border-red-700/50
+                             text-red-300 hover:text-red-200 transition-colors min-h-[44px]">
+                Retry
+              </button>
             </div>
           } @else {
             <p class="text-xs text-space-400 mb-4">
@@ -244,12 +273,33 @@ const PAGE_SIZE = 20;
           </div>
 
           @if (upcomingLoading()) {
-            <div class="flex items-center justify-center py-16">
-              <div class="text-space-400 text-sm">Loading approach data…</div>
+            <div class="space-y-2">
+              @for (n of skeletonItems; track n) {
+                <div class="flex items-center gap-3 bg-space-900 border border-space-700 rounded-xl
+                            px-4 py-3 animate-pulse">
+                  <div class="text-center shrink-0 w-12 space-y-1">
+                    <div class="h-2.5 w-8 mx-auto bg-space-800/60 rounded"></div>
+                    <div class="h-5 w-6 mx-auto bg-space-800 rounded"></div>
+                    <div class="h-2.5 w-8 mx-auto bg-space-800/60 rounded"></div>
+                  </div>
+                  <div class="w-px h-10 bg-space-700 shrink-0"></div>
+                  <div class="flex-1 min-w-0 space-y-1.5">
+                    <div class="h-3.5 w-36 bg-space-800 rounded"></div>
+                    <div class="h-3 w-48 bg-space-800/60 rounded"></div>
+                  </div>
+                </div>
+              }
             </div>
           } @else if (upcomingError()) {
-            <div class="rounded-xl border border-red-800/50 bg-red-950/30 px-4 py-4 text-sm text-red-300">
-              Failed to load upcoming approaches. Please try again.
+            <div class="rounded-xl border border-red-800/50 bg-red-950/30 px-4 py-4 text-sm text-red-300
+                        flex items-center justify-between gap-3">
+              <p>Couldn't load upcoming approaches — the NASA API may be temporarily unavailable.</p>
+              <button (click)="retryUpcoming()"
+                      class="shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg
+                             bg-red-900/50 hover:bg-red-900/80 border border-red-700/50
+                             text-red-300 hover:text-red-200 transition-colors min-h-[44px]">
+                Retry
+              </button>
             </div>
           } @else if (upcomingApproaches().length === 0) {
             <div class="rounded-xl border border-space-700 bg-space-900/50 px-4 py-8 text-center">
@@ -376,6 +426,7 @@ export class DefenseWatchComponent implements OnInit {
   });
 
   readonly dayOptions: DaysFilter[] = [30, 90, 365];
+  readonly skeletonItems = [1, 2, 3, 4, 5, 6];
 
   readonly formatDate = formatDate;
   readonly formatMissDistance = formatMissDistance;
@@ -395,6 +446,9 @@ export class DefenseWatchComponent implements OnInit {
   phaPageNext(): void { if (this.phaPage() < this.phaTotalPages()) this.phaPage.update(p => p + 1); }
   upcomingPagePrev(): void { if (this.upcomingPage() > 1) this.upcomingPage.update(p => p - 1); }
   upcomingPageNext(): void { if (this.upcomingPage() < this.upcomingTotalPages()) this.upcomingPage.update(p => p + 1); }
+
+  retryPhas(): void { this.loadPhas(); }
+  retryUpcoming(): void { this.loadUpcoming(this.selectedDays()); }
 
   daysUntilApproach(date: string | null): number | null {
     return daysUntil(date);
@@ -424,7 +478,7 @@ export class DefenseWatchComponent implements OnInit {
     return map[rating] ?? 'bg-space-800 text-space-400 border border-space-700';
   }
 
-  private loadPhas(): void {
+  loadPhas(): void {
     this.phaLoading.set(true);
     this.phaError.set(false);
     this.api.getPhaList().subscribe({
@@ -439,7 +493,7 @@ export class DefenseWatchComponent implements OnInit {
     });
   }
 
-  private loadUpcoming(days: number): void {
+  loadUpcoming(days: number): void {
     this.upcomingLoading.set(true);
     this.upcomingError.set(false);
     this.api.getUpcomingApproaches(days).subscribe({

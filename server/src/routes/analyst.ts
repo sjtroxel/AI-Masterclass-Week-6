@@ -57,6 +57,10 @@ router.post('/message', async (req: Request, res: Response) => {
     res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'message is required' } });
     return;
   }
+  if (message.length > 5_000) {
+    res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'message must be 5,000 characters or fewer' } });
+    return;
+  }
 
   // Validate session exists before opening SSE stream
   try {

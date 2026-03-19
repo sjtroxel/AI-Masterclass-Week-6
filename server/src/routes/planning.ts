@@ -79,9 +79,17 @@ router.post('/portfolio', async (req: Request, res: Response, next: NextFunction
 
 // ── Shared validators ─────────────────────────────────────────────────────────
 
+const MAX_ASTEROID_IDS = 50;
+
 function validateAsteroidIds(value: unknown): string[] {
   if (!Array.isArray(value)) {
     throw new ValidationError('asteroidIds must be an array of strings');
+  }
+  if (value.length === 0) {
+    throw new ValidationError('asteroidIds must not be empty');
+  }
+  if (value.length > MAX_ASTEROID_IDS) {
+    throw new ValidationError(`asteroidIds may contain at most ${MAX_ASTEROID_IDS} entries`);
   }
   if (value.some((id) => typeof id !== 'string' || id.trim() === '')) {
     throw new ValidationError('Each asteroidId must be a non-empty string');
