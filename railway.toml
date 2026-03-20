@@ -3,7 +3,7 @@
 
 [build]
 builder = "nixpacks"
-buildCommand = "npm ci && npm run build --workspace=server"
+buildCommand = "npm run build --workspace=server"
 
 [deploy]
 startCommand = "node server/dist/server.js"
