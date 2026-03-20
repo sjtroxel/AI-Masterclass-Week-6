@@ -1,6 +1,5 @@
 {
-  "comment": "Vercel deployment config — wired up and ready for Phase 8. Deployment itself does NOT happen until Phase 8.",
-  "buildCommand": "npm ci && npm run build --workspace=client",
+"buildCommand": "npm ci && npm run build --workspace=client",
   "outputDirectory": "client/dist/client/browser",
   "framework": null,
   "rewrites": [
