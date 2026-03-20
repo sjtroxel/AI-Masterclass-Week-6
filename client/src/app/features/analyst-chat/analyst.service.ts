@@ -12,6 +12,8 @@
 
 import { Injectable, signal, computed } from '@angular/core';
 
+import { API_BASE_URL } from '../../core/env';
+
 // ── Domain types ──────────────────────────────────────────────────────────────
 
 export interface RetrievedChunk {
@@ -68,7 +70,7 @@ export class AnalystService {
     this.sessionExpired.set(false);
 
     try {
-      const res = await fetch('/api/analyst/start', {
+      const res = await fetch(`${API_BASE_URL}/api/analyst/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ context_asteroid_id: contextAsteroidId ?? null }),
@@ -94,7 +96,7 @@ export class AnalystService {
     if (!token) return;
 
     // Best-effort cleanup — don't block the user on failure
-    fetch('/api/analyst/session', {
+    fetch(`${API_BASE_URL}/api/analyst/session`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ session_token: token }),
@@ -132,7 +134,7 @@ export class AnalystService {
     this.isStreaming.set(true);
 
     try {
-      const res = await fetch('/api/analyst/message', {
+      const res = await fetch(`${API_BASE_URL}/api/analyst/message`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ session_token: token, message: trimmed }),
