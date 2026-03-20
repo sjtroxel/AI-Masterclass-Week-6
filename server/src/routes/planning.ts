@@ -19,8 +19,22 @@
 import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import { compareAsteroids, buildScenario, optimizePortfolio } from '../services/planningService.js';
+import { getAsteroidById, getAsteroidByNasaId } from '../services/asteroidService.js';
 import { ValidationError } from '../errors/AppError.js';
 import type { MissionParams, MissionConstraints } from '../../../shared/types.js';
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+async function resolveAsteroidUuid(id: string): Promise<string> {
+  const asteroid = UUID_RE.test(id)
+    ? await getAsteroidById(id)
+    : await getAsteroidByNasaId(id);
+  return asteroid.id;
+}
+
+async function resolveAllUuids(ids: string[]): Promise<string[]> {
+  return Promise.all(ids.map(resolveAsteroidUuid));
+}
 
 const router = Router();
 
@@ -30,7 +44,7 @@ router.post('/compare', async (req: Request, res: Response, next: NextFunction) 
   try {
     const body = req.body as { asteroidIds?: unknown; missionParams?: MissionParams };
 
-    const asteroidIds = validateAsteroidIds(body.asteroidIds);
+    const asteroidIds = await resolveAllUuids(validateAsteroidIds(body.asteroidIds));
     const missionParams: MissionParams = body.missionParams ?? {};
 
     const result = await compareAsteroids(asteroidIds, missionParams);
@@ -46,7 +60,7 @@ router.post('/scenario', async (req: Request, res: Response, next: NextFunction)
   try {
     const body = req.body as { asteroidIds?: unknown; constraints?: MissionConstraints };
 
-    const asteroidIds = validateAsteroidIds(body.asteroidIds);
+    const asteroidIds = await resolveAllUuids(validateAsteroidIds(body.asteroidIds));
     const constraints: MissionConstraints = body.constraints ?? {};
 
     const result = await buildScenario(asteroidIds, constraints);
@@ -66,7 +80,7 @@ router.post('/portfolio', async (req: Request, res: Response, next: NextFunction
       portfolioSize?: unknown;
     };
 
-    const asteroidIds = validateAsteroidIds(body.asteroidIds);
+    const asteroidIds = await resolveAllUuids(validateAsteroidIds(body.asteroidIds));
     const constraints: MissionConstraints = body.constraints ?? {};
     const portfolioSize = validatePortfolioSize(body.portfolioSize);
 

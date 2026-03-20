@@ -290,6 +290,120 @@ describe('GET /api/analysis/:asteroidId/latest', () => {
   });
 });
 
+// ── GET /api/analysis/:asteroidId/stream ─────────────────────────────────────
+
+describe('GET /api/analysis/:asteroidId/stream', () => {
+  beforeEach(() => {
+    // Configure orchestrator to call onProgress so SSE events are emitted
+    mockRunOrchestrator.mockImplementation(
+      async (
+        _asteroidId: string,
+        _missionParams: Record<string, unknown>,
+        _agents: string[],
+        onProgress?: (e: { type: string; phase?: string; agent?: string; status?: string }) => void,
+      ) => {
+        onProgress?.({ type: 'agent_start', phase: 'navigating' });
+        onProgress?.({ type: 'agent_complete', agent: 'navigator', status: 'success' });
+        onProgress?.({ type: 'agent_start', phase: 'geologizing' });
+        onProgress?.({ type: 'agent_complete', agent: 'geologist', status: 'success' });
+        onProgress?.({ type: 'agent_complete', agent: 'riskAssessor', status: 'success' });
+        onProgress?.({ type: 'agent_start', phase: 'economizing' });
+        onProgress?.({ type: 'agent_complete', agent: 'economist', status: 'success' });
+        onProgress?.({ type: 'agent_start', phase: 'synthesizing' });
+        return FIXTURE_ORCHESTRATOR_RESULT;
+      },
+    );
+  });
+
+  it('returns 200 with text/event-stream content type', async () => {
+    const res = await request(app)
+      .get('/api/analysis/test-asteroid-uuid/stream')
+      .buffer(true);
+
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toMatch(/text\/event-stream/);
+  });
+
+  it('emits agent_start and agent_complete events followed by analysis_complete', async () => {
+    const res = await request(app)
+      .get('/api/analysis/test-asteroid-uuid/stream')
+      .buffer(true);
+
+    const body: string = res.text ?? String(res.body);
+    expect(body).toContain('event: agent_start');
+    expect(body).toContain('event: agent_complete');
+    expect(body).toContain('event: analysis_complete');
+    expect(body).toContain('event: done');
+  });
+
+  it('analysis_complete payload matches the expected AnalysisResponse shape', async () => {
+    const res = await request(app)
+      .get('/api/analysis/test-asteroid-uuid/stream')
+      .buffer(true);
+
+    const body: string = res.text ?? String(res.body);
+    const completeLine = body
+      .split('\n\n')
+      .find((block) => block.includes('event: analysis_complete'));
+
+    expect(completeLine).toBeDefined();
+    const dataLine = completeLine!.split('\n').find((l) => l.startsWith('data:'));
+    expect(dataLine).toBeDefined();
+    const payload = JSON.parse(dataLine!.slice('data: '.length)) as {
+      analysisId: string;
+      asteroidId: string;
+      status: string;
+      handoffTriggered: boolean;
+    };
+    expect(payload.analysisId).toBe('analysis-result-uuid');
+    expect(payload.asteroidId).toBe('test-asteroid-uuid');
+    expect(payload.status).toBe('complete');
+    expect(payload.handoffTriggered).toBe(false);
+  });
+
+  it('emits agent_start events for each phase in order', async () => {
+    const res = await request(app)
+      .get('/api/analysis/test-asteroid-uuid/stream')
+      .buffer(true);
+
+    const body: string = res.text ?? String(res.body);
+    const startBlocks = body
+      .split('\n\n')
+      .filter((b) => b.includes('event: agent_start'));
+
+    const phases = startBlocks.map((block) => {
+      const dataLine = block.split('\n').find((l) => l.startsWith('data:'));
+      const data = JSON.parse(dataLine!.slice('data: '.length)) as { phase: string };
+      return data.phase;
+    });
+
+    expect(phases).toEqual(['navigating', 'geologizing', 'economizing', 'synthesizing']);
+  });
+
+  it('returns 404 when asteroid is not found', async () => {
+    const { NotFoundError } = await import('../../src/errors/AppError.js');
+    const { getAsteroidById, getAsteroidByNasaId } = await import('../../src/services/asteroidService.js');
+    vi.mocked(getAsteroidById).mockRejectedValueOnce(new NotFoundError('Asteroid not found'));
+    vi.mocked(getAsteroidByNasaId).mockRejectedValueOnce(new NotFoundError('Asteroid not found'));
+
+    const res = await request(app).get('/api/analysis/nonexistent-id/stream');
+    expect(res.status).toBe(404);
+  });
+
+  it('emits error event when orchestrator throws after stream opens', async () => {
+    mockRunOrchestrator.mockRejectedValueOnce(new Error('Orchestrator crashed'));
+
+    const res = await request(app)
+      .get('/api/analysis/test-asteroid-uuid/stream')
+      .buffer(true);
+
+    expect(res.status).toBe(200); // SSE headers already sent
+    const body: string = res.text ?? String(res.body);
+    expect(body).toContain('event: error');
+    expect(body).toContain('Orchestrator crashed');
+  });
+});
+
 // ── GET /api/analysis/record/:analysisId ─────────────────────────────────────
 
 describe('GET /api/analysis/record/:analysisId', () => {

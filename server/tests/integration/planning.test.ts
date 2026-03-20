@@ -17,6 +17,12 @@ vi.mock('../../src/services/planningService.js', () => ({
   optimizePortfolio: mockOptimizePortfolio,
 }));
 
+// asteroidService — required by planning route's resolveAllUuids
+vi.mock('../../src/services/asteroidService.js', () => ({
+  getAsteroidById: vi.fn().mockImplementation((id: string) => Promise.resolve({ id })),
+  getAsteroidByNasaId: vi.fn().mockImplementation((id: string) => Promise.resolve({ id })),
+}));
+
 // Transitive mocks required by other routes loaded with app
 vi.mock('../../src/db/supabase.js', () => ({
   supabase: { from: vi.fn() },

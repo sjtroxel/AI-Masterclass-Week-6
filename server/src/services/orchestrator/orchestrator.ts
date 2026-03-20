@@ -86,12 +86,21 @@ export interface OrchestratorResult {
   trace: SwarmTrace;
 }
 
+// ── Progress callback (for SSE streaming) ─────────────────────────────────────
+
+export type ProgressEvent =
+  | { type: 'agent_start'; phase: SwarmPhase }
+  | { type: 'agent_complete'; agent: AgentType; status: 'success' | 'failed' };
+
+export type ProgressCallback = (event: ProgressEvent) => void;
+
 // ── Public entry point ────────────────────────────────────────────────────────
 
 export async function runOrchestrator(
   asteroidId: string,
   missionParams: MissionParams,
   requestedAgents: AgentType[] = ['navigator', 'geologist', 'economist', 'riskAssessor'],
+  onProgress?: ProgressCallback,
 ): Promise<OrchestratorResult> {
   const wallStart = Date.now();
 
@@ -124,6 +133,7 @@ export async function runOrchestrator(
   // ── Phase: Navigator ────────────────────────────────────────────────────────
   mutatePhase(state, 'navigating');
   await updateAnalysisPhase(analysisId, 'navigating');
+  onProgress?.({ type: 'agent_start', phase: 'navigating' });
 
   if (requestedAgents.includes('navigator')) {
     try {
@@ -136,10 +146,12 @@ export async function runOrchestrator(
       console.error('[Orchestrator] Navigator failed:', msg);
     }
   }
+  onProgress?.({ type: 'agent_complete', agent: 'navigator', status: state.navigatorOutput ? 'success' : 'failed' });
 
   // ── Phase: Geologist + Risk Assessor (parallel) ─────────────────────────────
   mutatePhase(state, 'geologizing');
   await updateAnalysisPhase(analysisId, 'geologizing');
+  onProgress?.({ type: 'agent_start', phase: 'geologizing' });
 
   const parallelResults = await Promise.allSettled([
     requestedAgents.includes('geologist')
@@ -160,6 +172,7 @@ export async function runOrchestrator(
     state.errors.push({ agent: 'geologist', message: msg, code: 'AGENT_ERROR', recoverable: true });
     console.error('[Orchestrator] Geologist failed:', msg);
   }
+  onProgress?.({ type: 'agent_complete', agent: 'geologist', status: state.geologistOutput ? 'success' : 'failed' });
 
   if (riskResult.status === 'fulfilled' && riskResult.value) {
     state.riskOutput = riskResult.value.output;
@@ -169,10 +182,12 @@ export async function runOrchestrator(
     state.errors.push({ agent: 'riskAssessor', message: msg, code: 'AGENT_ERROR', recoverable: true });
     console.error('[Orchestrator] Risk Assessor failed:', msg);
   }
+  onProgress?.({ type: 'agent_complete', agent: 'riskAssessor', status: state.riskOutput ? 'success' : 'failed' });
 
   // ── Phase: Economist (depends on Geologist) ─────────────────────────────────
   mutatePhase(state, 'economizing');
   await updateAnalysisPhase(analysisId, 'economizing');
+  onProgress?.({ type: 'agent_start', phase: 'economizing' });
 
   if (requestedAgents.includes('economist')) {
     try {
@@ -185,6 +200,7 @@ export async function runOrchestrator(
       console.error('[Orchestrator] Economist failed:', msg);
     }
   }
+  onProgress?.({ type: 'agent_complete', agent: 'economist', status: state.economistOutput ? 'success' : 'failed' });
 
   // ── Phase: Compute confidence ────────────────────────────────────────────────
   const confidenceInputs = buildConfidenceInputs(state, requestedAgents);
@@ -194,6 +210,7 @@ export async function runOrchestrator(
   // ── Phase: Synthesize or handoff ─────────────────────────────────────────────
   mutatePhase(state, 'synthesizing');
   await updateAnalysisPhase(analysisId, 'synthesizing');
+  onProgress?.({ type: 'agent_start', phase: 'synthesizing' });
 
   let synthesisLatencyMs: number | undefined;
 

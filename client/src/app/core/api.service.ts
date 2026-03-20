@@ -426,14 +426,8 @@ export class ApiService {
     return this.http.get<AsteroidDetail>(`${this.base}/asteroids/${id}`);
   }
 
-  triggerAnalysis(
-    asteroidId: string,
-    missionParams: Record<string, unknown> = {},
-  ): Observable<AnalysisResponse> {
-    return this.http.post<AnalysisResponse>(
-      `${this.base}/analysis/${asteroidId}`,
-      { missionParams },
-    );
+  streamAnalysis(asteroidId: string): EventSource {
+    return new EventSource(`${this.base}/analysis/${asteroidId}/stream`);
   }
 
   getLatestAnalysis(asteroidId: string): Observable<AnalysisResponse> {

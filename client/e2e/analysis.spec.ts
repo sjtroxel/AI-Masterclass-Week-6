@@ -298,19 +298,26 @@ test.describe('Analysis results display (mocked API)', () => {
       route.fulfill({ status: 404, contentType: 'application/json', body: JSON.stringify({ error: { code: 'NOT_FOUND' } }) });
     });
 
-    // Mock the POST to return success quickly
-    await page.route(`**/api/analysis/${KNOWN_ASTEROID_ID}`, async (route) => {
-      if (route.request().method() === 'POST') {
-        // Brief delay to test spinner
-        await new Promise((r) => setTimeout(r, 100));
-        route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify(MOCK_ANALYSIS_RESPONSE),
-        });
-      } else {
-        route.continue();
-      }
+    // Mock the SSE stream with all agent progress events + final result
+    const sseBody = [
+      'event: agent_start\ndata: {"type":"agent_start","phase":"navigating"}\n\n',
+      'event: agent_complete\ndata: {"type":"agent_complete","agent":"navigator","status":"success"}\n\n',
+      'event: agent_start\ndata: {"type":"agent_start","phase":"geologizing"}\n\n',
+      'event: agent_complete\ndata: {"type":"agent_complete","agent":"geologist","status":"success"}\n\n',
+      'event: agent_complete\ndata: {"type":"agent_complete","agent":"riskAssessor","status":"success"}\n\n',
+      'event: agent_start\ndata: {"type":"agent_start","phase":"economizing"}\n\n',
+      'event: agent_complete\ndata: {"type":"agent_complete","agent":"economist","status":"success"}\n\n',
+      'event: agent_start\ndata: {"type":"agent_start","phase":"synthesizing"}\n\n',
+      `event: analysis_complete\ndata: ${JSON.stringify(MOCK_ANALYSIS_RESPONSE)}\n\n`,
+      'event: done\ndata: ""\n\n',
+    ].join('');
+
+    await page.route(`**/api/analysis/${KNOWN_ASTEROID_ID}/stream`, (route) => {
+      route.fulfill({
+        status: 200,
+        headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' },
+        body: sseBody,
+      });
     });
 
     await page.goto(`/analysis/${KNOWN_ASTEROID_ID}`);
@@ -319,8 +326,7 @@ test.describe('Analysis results display (mocked API)', () => {
     await expect(button).toBeVisible();
     await button.click({ force: true });
 
-    // After click, button should no longer say "Run Agent Swarm Analysis" (running state)
-    // Wait for the result to appear
+    // Wait for the synthesis to appear
     await expect(
       page.getByText(/strong candidate for robotic resource extraction/i),
     ).toBeVisible({ timeout: 10_000 });

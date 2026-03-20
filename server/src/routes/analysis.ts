@@ -19,6 +19,7 @@
 import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import { runOrchestrator } from '../services/orchestrator/orchestrator.js';
+import type { ProgressEvent } from '../services/orchestrator/orchestrator.js';
 import { supabase } from '../db/supabase.js';
 import { getAsteroidByNasaId, getAsteroidById } from '../services/asteroidService.js';
 import { ValidationError, DatabaseError, NotFoundError } from '../errors/AppError.js';
@@ -96,6 +97,73 @@ router.post('/:asteroidId', async (req: Request, res: Response, next: NextFuncti
   } catch (err) {
     next(err);
   }
+});
+
+// ── GET /api/analysis/:asteroidId/stream (SSE) ────────────────────────────────
+
+router.get('/:asteroidId/stream', async (req: Request, res: Response, next: NextFunction) => {
+  const { asteroidId: rawId } = req.params as { asteroidId: string };
+  if (!rawId) { next(new ValidationError('asteroidId is required')); return; }
+
+  let asteroidId: string;
+  try {
+    asteroidId = await resolveAsteroidUuid(rawId);
+  } catch (err) {
+    next(err);
+    return;
+  }
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  const writeSse = (event: string, data: unknown): void => {
+    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+  };
+
+  try {
+    const { state, trace } = await runOrchestrator(
+      asteroidId,
+      {},
+      ['navigator', 'geologist', 'economist', 'riskAssessor'],
+      (evt: ProgressEvent) => writeSse(evt.type, evt),
+    );
+
+    writeSse('analysis_complete', {
+      analysisId: trace.analysisId,
+      asteroidId,
+      status: state.phase,
+      phase: state.phase,
+      handoffTriggered: state.handoffTriggered,
+      confidenceScores: state.confidenceScores ?? null,
+      synthesis: state.synthesis ?? null,
+      handoffPacket: state.handoffPacket ?? null,
+      outputs: {
+        navigator: state.navigatorOutput ?? null,
+        geologist: state.geologistOutput ?? null,
+        economist: state.economistOutput ?? null,
+        risk: state.riskOutput ?? null,
+      },
+      trace: {
+        totalLatencyMs: trace.totalLatencyMs,
+        agentLatencies: Object.fromEntries(
+          Object.entries(trace.agentTraces).map(([agent, t]) => [agent, t?.totalLatencyMs ?? null]),
+        ),
+        confidenceInputs: trace.confidenceInputs,
+        agentEvents: Object.fromEntries(
+          Object.entries(trace.agentTraces).map(([agent, t]) => [agent, t?.events ?? []]),
+        ),
+      },
+      errors: state.errors,
+    });
+    writeSse('done', '');
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Analysis failed';
+    writeSse('error', { message: msg });
+  }
+
+  res.end();
 });
 
 // ── GET /api/analysis/:asteroidId/latest ──────────────────────────────────────

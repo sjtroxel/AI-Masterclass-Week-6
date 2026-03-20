@@ -131,6 +131,15 @@
 ### Calibration
 - [x] `HANDOFF_THRESHOLD` reviewed and calibrated — **final value: 0.30** (calibrated in Phase 5 from initial 0.55 after live runs on Apophis, Bennu, Ryugu; documented in `CLAUDE.md` and `.claude/rules/agents.md`)
 
+### SSE Agent Progress Streaming
+- [x] `GET /api/analysis/:asteroidId/stream` SSE endpoint added — (2026-03-19)
+  - Orchestrator accepts optional `onProgress` callback; called at 8 points (phase starts + agent completions)
+  - SSE events: `agent_start` (phase begins), `agent_complete` (agent done with success/failed status), `analysis_complete` (full result payload), `done`, `error`
+  - Frontend replaced HTTP POST long-poll with `EventSource` — per-agent status dots update live (idle → running → done/failed)
+  - `ApiService.streamAnalysis()` returns `EventSource`; `DestroyRef` closes stream on component destroy
+  - 6 new integration tests; E2E "run button" test updated to mock SSE stream; 215 server tests passing
+  - Phase 9 planned: deeper per-event streaming (individual tool calls, RAG lookups, token chunks as they happen)
+
 ### Production Deployment
 - [ ] All migrations applied to production Supabase
 - [ ] Railway backend deployed and healthy

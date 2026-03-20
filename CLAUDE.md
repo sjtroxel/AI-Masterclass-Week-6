@@ -167,10 +167,12 @@ The AI Analyst is architecturally constrained to these indices. It cannot use mo
 | 5 | Agent Swarm | Complete ✓ |
 | 6 | Mission Planning | Complete ✓ |
 | 7 | Planetary Defense | Complete ✓ |
-| 8 | Hardening & Deployment | In progress — hardening complete, deployment pending |
+| 8 | Hardening & Deployment | In progress — hardening + SSE streaming complete, deployment pending |
+| 9 | Observability Polish | Planned — per-event agent streaming (tool calls, RAG lookups live) |
 
 Full roadmap: `project-specs/ROADMAP.md`
 Current phase details: `project-specs/roadmap/PHASE_8_HARDENING.md`
+Phase 9 spec: `project-specs/roadmap/PHASE_9_OBSERVABILITY.md`
 
 ---
 
@@ -191,5 +193,6 @@ Current phase details: `project-specs/roadmap/PHASE_8_HARDENING.md`
 - Three.js orbital viz is Phase 6 scope, not earlier; `@types/three` IS required (three@0.183.x ships no .d.ts)
 - Apophis 2029 is a hand-crafted featured case study in Phase 7
 
-*Last updated: 2026-03-19 — Phase 8 hardening complete (tests, E2E, accessibility, error states, performance, security). Deployment to Railway + Vercel is the only remaining step.*
+*Last updated: 2026-03-19 — Phase 8 hardening complete (tests, E2E, accessibility, error states, performance, security) + SSE agent progress streaming added. Deployment to Railway + Vercel is the only remaining step.*
 *See `project-specs/roadmap/PHASE_8_HARDENING.md` for full Phase 8 scope.*
+*Phase 9 planned: per-event agent observability streaming — see `project-specs/roadmap/PHASE_9_OBSERVABILITY.md`.*

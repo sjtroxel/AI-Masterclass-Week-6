@@ -1,5 +1,6 @@
 import {
   Component,
+  DestroyRef,
   inject,
   signal,
   computed,
@@ -102,15 +103,29 @@ type AnalysisState = 'idle' | 'running' | 'complete' | 'handoff' | 'error';
                           animate-spin shrink-0"></div>
               <p class="text-sm font-medium text-white">Agent swarm running…</p>
             </div>
-            <p class="text-xs text-space-400">
-              Navigator → Geologist + Risk Assessor (parallel) → Economist → Synthesis
-            </p>
-            <!-- Agent phase indicators -->
+            <!-- Per-agent live status -->
             <div class="grid grid-cols-2 gap-2">
-              @for (agent of agentPhases(); track agent.name) {
+              @for (agent of agentPhases(); track agent.key) {
                 <div class="flex items-center gap-2 bg-space-800 rounded-lg px-3 py-2">
-                  <div class="w-2 h-2 rounded-full shrink-0 animate-pulse bg-nebula-500"></div>
-                  <span class="text-xs text-space-300">{{ agent.name }}</span>
+                  @if (agent.status === 'done') {
+                    <div class="w-2 h-2 rounded-full shrink-0 bg-safe-500"></div>
+                  } @else if (agent.status === 'failed') {
+                    <div class="w-2 h-2 rounded-full shrink-0 bg-hazard-500"></div>
+                  } @else if (agent.status === 'running') {
+                    <div class="w-2 h-2 rounded-full shrink-0 animate-pulse bg-nebula-500"></div>
+                  } @else {
+                    <div class="w-2 h-2 rounded-full shrink-0 bg-space-600"></div>
+                  }
+                  <span class="text-xs"
+                        [class]="agent.status === 'done' ? 'text-safe-400' :
+                                 agent.status === 'failed' ? 'text-hazard-400' :
+                                 agent.status === 'running' ? 'text-white' :
+                                 'text-space-400'">
+                    {{ agent.name }}
+                  </span>
+                  @if (agent.status === 'done') {
+                    <span class="ml-auto text-[10px] text-safe-500">✓</span>
+                  }
                 </div>
               }
             </div>
@@ -491,6 +506,15 @@ export class AnalysisComponent implements OnInit {
   readonly state = signal<AnalysisState>('idle');
   readonly analysis = signal<AnalysisResponse | null>(null);
   readonly errorMessage = signal<string | null>(null);
+  readonly agentStatuses = signal<Record<string, 'idle' | 'running' | 'done' | 'failed'>>({});
+
+  private eventSource: EventSource | null = null;
+
+  constructor() {
+    inject(DestroyRef).onDestroy(() => {
+      this.eventSource?.close();
+    });
+  }
 
   // ── Computed ────────────────────────────────────────────────────────────────
 
@@ -512,12 +536,15 @@ export class AnalysisComponent implements OnInit {
     return '';
   });
 
-  readonly agentPhases = computed(() => [
-    { name: 'Navigator' },
-    { name: 'Geologist' },
-    { name: 'Risk Assessor' },
-    { name: 'Economist' },
-  ]);
+  readonly agentPhases = computed(() => {
+    const s = this.agentStatuses();
+    return [
+      { name: 'Navigator',     key: 'navigator',     status: s['navigator']     ?? 'idle' },
+      { name: 'Geologist',     key: 'geologist',     status: s['geologist']     ?? 'idle' },
+      { name: 'Risk Assessor', key: 'riskAssessor',  status: s['riskAssessor']  ?? 'idle' },
+      { name: 'Economist',     key: 'economist',     status: s['economist']     ?? 'idle' },
+    ] as const;
+  });
 
   readonly confidenceDimensions = computed(() => {
     const scores = this.analysis()?.confidenceScores;
@@ -630,23 +657,62 @@ export class AnalysisComponent implements OnInit {
 
     this.state.set('running');
     this.errorMessage.set(null);
+    this.agentStatuses.set({});
 
-    this.api.triggerAnalysis(id).subscribe({
-      next: (result) => {
-        this.analysis.set(result);
-        this.state.set(result.handoffTriggered ? 'handoff' : 'complete');
-      },
-      error: (err: unknown) => {
-        const httpErr = err as { error?: { error?: { message?: string }; message?: string }; message?: string };
-        const msg =
-          httpErr?.error?.error?.message ??
-          httpErr?.error?.message ??
-          httpErr?.message ??
-          'Analysis failed. Please try again.';
+    // Close any existing stream
+    this.eventSource?.close();
+    const es = this.api.streamAnalysis(id);
+    this.eventSource = es;
+
+    es.addEventListener('agent_start', (ev) => {
+      const data = JSON.parse((ev as MessageEvent).data) as { phase: string };
+      const statuses = { ...this.agentStatuses() };
+      if (data.phase === 'navigating') statuses['navigator'] = 'running';
+      if (data.phase === 'geologizing') {
+        statuses['geologist'] = 'running';
+        statuses['riskAssessor'] = 'running';
+      }
+      if (data.phase === 'economizing') statuses['economist'] = 'running';
+      this.agentStatuses.set(statuses);
+    });
+
+    es.addEventListener('agent_complete', (ev) => {
+      const data = JSON.parse((ev as MessageEvent).data) as { agent: string; status: string };
+      this.agentStatuses.update((s) => ({
+        ...s,
+        [data.agent]: data.status === 'success' ? 'done' : 'failed',
+      }));
+    });
+
+    es.addEventListener('analysis_complete', (ev) => {
+      const result = JSON.parse((ev as MessageEvent).data) as AnalysisResponse;
+      this.analysis.set(result);
+      this.state.set(result.handoffTriggered ? 'handoff' : 'complete');
+      es.close();
+      this.eventSource = null;
+    });
+
+    es.addEventListener('error', (ev) => {
+      const raw = (ev as MessageEvent).data as string | undefined;
+      const msg = raw
+        ? (JSON.parse(raw) as { message?: string }).message ?? 'Analysis failed. Please try again.'
+        : null;
+      if (msg) {
         this.errorMessage.set(msg);
         this.state.set('error');
-      },
+        es.close();
+        this.eventSource = null;
+      }
     });
+
+    es.onerror = () => {
+      if (this.state() === 'running') {
+        this.errorMessage.set('Connection to server lost. Please try again.');
+        this.state.set('error');
+      }
+      es.close();
+      this.eventSource = null;
+    };
   }
 
   // ── Private ──────────────────────────────────────────────────────────────────
