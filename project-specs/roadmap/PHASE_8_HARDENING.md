@@ -2,7 +2,7 @@
 
 **Goal**: Full test coverage, accessibility, performance tuning, and final production deployment.
 
-**Status**: In progress — hardening complete (tests, E2E, accessibility, error states, performance, security). Production deployment is the only remaining block.
+**Status**: Complete ✓ — deployed to Railway + Vercel (2026-03-20).
 
 ---
 
@@ -141,15 +141,15 @@
   - Phase 9 planned: deeper per-event streaming (individual tool calls, RAG lookups, token chunks as they happen)
 
 ### Production Deployment
-- [ ] All migrations applied to production Supabase
-- [ ] Railway backend deployed and healthy
-- [ ] Vercel frontend deployed and healthy
-- [ ] `GET /api/health` returns 200 in production
-- [ ] Smoke test the full user journey on production (not staging)
+- [x] All migrations applied to production Supabase — migrations 0001–0007 applied
+- [x] Railway backend deployed and healthy — https://asteroid-bonanza.up.railway.app
+- [x] Vercel frontend deployed and healthy — https://asteroid-bonanza.vercel.app
+- [x] `GET /api/health` returns 200 in production
+- [x] Smoke test the full user journey on production — search loads asteroids, dossier opens, analysis runs successfully (2026-03-20)
 
 ### Documentation
-- [ ] `CLAUDE.md` updated to reflect final project state
-- [ ] Each roadmap phase file status updated to "Complete"
+- [x] `CLAUDE.md` updated to reflect final project state — Phase 8 marked Complete ✓ (2026-03-20)
+- [x] Phase 8 roadmap file status updated to "Complete" (2026-03-20)
 
 **Exit condition**: App is live in production, all E2E tests pass, Lighthouse mobile score is acceptable, and there are no open accessibility violations.
 
