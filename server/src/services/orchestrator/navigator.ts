@@ -24,6 +24,7 @@ import type { AsteroidRow } from '../asteroidService.js';
 import { SONNET } from '../../../../shared/models.js';
 import { AIServiceError } from '../../errors/AppError.js';
 import { AgentLogger } from './agentLogger.js';
+import type { AgentLogEvent } from './agentLogger.js';
 import {
   FETCH_NHATS_TOOL,
   FETCH_CLOSE_APPROACHES_TOOL,
@@ -150,8 +151,9 @@ export async function runNavigator(
   asteroid: AsteroidRow,
   _state: SwarmState,
   missionParams: MissionParams,
+  onProgress?: (event: AgentLogEvent) => void,
 ): Promise<NavigatorResult> {
-  const logger = new AgentLogger('navigator');
+  const logger = new AgentLogger('navigator', onProgress);
 
   logger.logInput(asteroid.id, asteroid.name ?? asteroid.full_name ?? null, {
     designation: asteroid.designation,

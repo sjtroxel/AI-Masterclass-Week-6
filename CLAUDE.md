@@ -168,7 +168,7 @@ The AI Analyst is architecturally constrained to these indices. It cannot use mo
 | 6 | Mission Planning | Complete ✓ |
 | 7 | Planetary Defense | Complete ✓ |
 | 8 | Hardening & Deployment | Complete ✓ |
-| 9 | Observability Polish | Planned — per-event agent streaming (tool calls, RAG lookups live) |
+| 9 | Observability Polish | Complete ✓ |
 
 Full roadmap: `project-specs/ROADMAP.md`
 Current phase details: `project-specs/roadmap/PHASE_8_HARDENING.md`
@@ -193,6 +193,5 @@ Phase 9 spec: `project-specs/roadmap/PHASE_9_OBSERVABILITY.md`
 - Three.js orbital viz is Phase 6 scope, not earlier; `@types/three` IS required (three@0.183.x ships no .d.ts)
 - Apophis 2029 is a hand-crafted featured case study in Phase 7
 
-*Last updated: 2026-03-20 — Phase 8 complete. Railway (https://asteroid-bonanza.up.railway.app) + Vercel (https://asteroid-bonanza.vercel.app) both live in production. Angular env fixed via fileReplacements pattern. Phase 9 ready to begin.*
-*See `project-specs/roadmap/PHASE_8_HARDENING.md` for full Phase 8 scope.*
-*Phase 9 planned: per-event agent observability streaming — see `project-specs/roadmap/PHASE_9_OBSERVABILITY.md`.*
+*Last updated: 2026-03-21 — Phase 9 complete. All 9 phases shipped. Per-event agent observability streaming live: `agent_event` SSE carries each tool call / RAG lookup / output as it happens; `synthesis_token` streams the synthesis word-by-word. Frontend shows live collapsible event panels per agent during analysis runs.*
+*See `project-specs/roadmap/PHASE_9_OBSERVABILITY.md` for full Phase 9 scope.*

@@ -167,8 +167,9 @@ export async function runEconomist(
   asteroid: AsteroidRow,
   state: SwarmState,
   _missionParams: MissionParams,
+  onProgress?: (event: import('./agentLogger.js').AgentLogEvent) => void,
 ): Promise<EconomistResult> {
-  const logger = new AgentLogger('economist');
+  const logger = new AgentLogger('economist', onProgress);
 
   logger.logInput(asteroid.id, asteroid.name ?? asteroid.full_name ?? null, {
     spectral_type_smass: asteroid.spectral_type_smass,

@@ -129,6 +129,47 @@ type AnalysisState = 'idle' | 'running' | 'complete' | 'handoff' | 'error';
                 </div>
               }
             </div>
+
+            <!-- Live agent event feeds -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+              @for (agent of agentPhases(); track agent.key) {
+                @if (liveAgentEvents()[agent.key]?.length) {
+                  <details class="bg-space-800 rounded-lg overflow-hidden">
+                    <summary class="px-3 py-2 cursor-pointer list-none flex items-center
+                                    justify-between hover:bg-space-700 transition-colors min-h-[44px]">
+                      <span class="text-xs font-medium text-space-300">{{ agent.name }}</span>
+                      <span class="text-[10px] text-space-500">
+                        {{ liveAgentEvents()[agent.key]?.length }} events
+                      </span>
+                    </summary>
+                    <div class="px-3 pb-3 space-y-1.5 max-h-40 overflow-y-auto">
+                      @for (event of liveAgentEvents()[agent.key]; track $index) {
+                        <div class="flex items-start gap-2">
+                          <span class="shrink-0 text-[9px] font-mono px-1.5 py-0.5 rounded"
+                                [class]="eventBadgeClass(event['type'])">
+                            {{ event['type'] }}
+                          </span>
+                          <span class="text-[10px] text-space-300 leading-relaxed">
+                            {{ eventSummary(event) }}
+                          </span>
+                        </div>
+                      }
+                    </div>
+                  </details>
+                }
+              }
+            </div>
+
+            <!-- Synthesis streaming -->
+            @if (synthesisStream()) {
+              <div class="bg-nebula-600/10 border border-nebula-500/20 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-2">
+                  <div class="w-1.5 h-1.5 rounded-full bg-nebula-400 animate-pulse shrink-0"></div>
+                  <span class="text-xs font-semibold text-nebula-300">Synthesizing…</span>
+                </div>
+                <p class="text-sm text-space-200 leading-relaxed whitespace-pre-wrap">{{ synthesisStream() }}</p>
+              </div>
+            }
           </div>
         }
 
@@ -507,6 +548,8 @@ export class AnalysisComponent implements OnInit {
   readonly analysis = signal<AnalysisResponse | null>(null);
   readonly errorMessage = signal<string | null>(null);
   readonly agentStatuses = signal<Record<string, 'idle' | 'running' | 'done' | 'failed'>>({});
+  readonly liveAgentEvents = signal<Record<string, AgentEvent[]>>({});
+  readonly synthesisStream = signal<string>('');
 
   private eventSource: EventSource | null = null;
 
@@ -658,6 +701,8 @@ export class AnalysisComponent implements OnInit {
     this.state.set('running');
     this.errorMessage.set(null);
     this.agentStatuses.set({});
+    this.liveAgentEvents.set({});
+    this.synthesisStream.set('');
 
     // Close any existing stream
     this.eventSource?.close();
@@ -682,6 +727,19 @@ export class AnalysisComponent implements OnInit {
         ...s,
         [data.agent]: data.status === 'success' ? 'done' : 'failed',
       }));
+    });
+
+    es.addEventListener('agent_event', (ev) => {
+      const data = JSON.parse((ev as MessageEvent).data) as { agent: string; event: AgentEvent };
+      this.liveAgentEvents.update((all) => ({
+        ...all,
+        [data.agent]: [...(all[data.agent] ?? []), data.event],
+      }));
+    });
+
+    es.addEventListener('synthesis_token', (ev) => {
+      const data = JSON.parse((ev as MessageEvent).data) as { text: string };
+      this.synthesisStream.update((t) => t + data.text);
     });
 
     es.addEventListener('analysis_complete', (ev) => {

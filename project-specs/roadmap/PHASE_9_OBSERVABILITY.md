@@ -2,7 +2,7 @@
 
 **Goal**: Stream individual agent reasoning events (tool calls, RAG lookups, LLM token chunks) to the frontend in real time, so users can watch what each agent is actually thinking as it works — not just see a dot turn green when it finishes.
 
-**Status**: Planned — begins after Phase 8 deployment is complete.
+**Status**: Complete ✓ — shipped 2026-03-21.
 
 ---
 
@@ -24,22 +24,22 @@ Phase 9 makes that trace live.
 
 ### Backend
 
-- [ ] Thread `onProgress` callback down into each agent runner (`runNavigator`, `runGeologist`, etc.)
-- [ ] Call `onProgress` with a new `agent_event` SSE event type from `agentLogger.logEvent()` as each event is recorded — covering:
+- [x] Thread `onProgress` callback down into each agent runner (`runNavigator`, `runGeologist`, etc.)
+- [x] Call `onProgress` with a new `agent_event` SSE event type from `agentLogger.logEvent()` as each event is recorded — covering:
   - `tool_call` — agent invokes a NASA/JPL tool (name + input)
   - `tool_result` — tool returns data (name + result summary)
   - `rag_lookup` — agent queries science or scenario index (query + chunk count)
   - `output` — agent finishes and emits its typed output
   - `error` — agent-level error
-- [ ] For synthesis: stream LLM token chunks via Anthropic's streaming API (`messages.stream()`) so the synthesis text appears word-by-word
-- [ ] New SSE event types added to the stream: `agent_event`, `synthesis_token`
+- [x] For synthesis: stream LLM token chunks via Anthropic's streaming API (`messages.stream()`) so the synthesis text appears word-by-word
+- [x] New SSE event types added to the stream: `agent_event`, `synthesis_token`
 
 ### Frontend
 
-- [ ] Analysis running state: expandable per-agent panel showing live event feed as events arrive
-- [ ] Each event rendered with the same badge style as the post-run Observability Trace (`tool_call`, `rag_lookup`, etc.)
-- [ ] Synthesis section: renders tokens as they stream in (same pattern as Analyst Chat)
-- [ ] Mobile: event panels collapsed by default, tap to expand; desktop: side-by-side panels
+- [x] Analysis running state: expandable per-agent panel showing live event feed as events arrive
+- [x] Each event rendered with the same badge style as the post-run Observability Trace (`tool_call`, `rag_lookup`, etc.)
+- [x] Synthesis section: renders tokens as they stream in (same pattern as Analyst Chat)
+- [x] Mobile: event panels collapsed by default, tap to expand; desktop: side-by-side panels
 
 ### Architecture note
 

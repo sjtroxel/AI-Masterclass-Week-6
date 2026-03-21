@@ -146,8 +146,9 @@ export async function runGeologist(
   asteroid: AsteroidRow,
   _state: SwarmState,
   _missionParams: MissionParams,
+  onProgress?: (event: import('./agentLogger.js').AgentLogEvent) => void,
 ): Promise<GeologistResult> {
-  const logger = new AgentLogger('geologist');
+  const logger = new AgentLogger('geologist', onProgress);
 
   logger.logInput(asteroid.id, asteroid.name ?? asteroid.full_name ?? null, {
     spectral_type_smass: asteroid.spectral_type_smass,

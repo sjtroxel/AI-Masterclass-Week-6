@@ -182,8 +182,9 @@ export async function runRiskAssessor(
   asteroid: AsteroidRow,
   _state: SwarmState,
   _missionParams: MissionParams,
+  onProgress?: (event: import('./agentLogger.js').AgentLogEvent) => void,
 ): Promise<RiskAssessorResult> {
-  const logger = new AgentLogger('riskAssessor');
+  const logger = new AgentLogger('riskAssessor', onProgress);
 
   logger.logInput(asteroid.id, asteroid.name ?? asteroid.full_name ?? null, {
     is_pha: asteroid.is_pha,

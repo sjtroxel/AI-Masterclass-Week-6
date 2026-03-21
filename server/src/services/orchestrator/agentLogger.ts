@@ -105,7 +105,10 @@ export class AgentLogger {
   private readonly events: AgentLogEvent[] = [];
   private readonly startTime: number;
 
-  constructor(private readonly agent: AgentType) {
+  constructor(
+    private readonly agent: AgentType,
+    private readonly onProgress?: (event: AgentLogEvent) => void,
+  ) {
     this.startTime = Date.now();
   }
 
@@ -207,6 +210,7 @@ export class AgentLogger {
 
   private push(event: AgentLogEvent): void {
     this.events.push(event);
+    this.onProgress?.(event);
     // Structured console output in development
     if (process.env['NODE_ENV'] !== 'production') {
       const { type, timestamp, ...rest } = event;

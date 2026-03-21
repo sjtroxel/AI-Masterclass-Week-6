@@ -43,7 +43,7 @@ import { runNavigator } from './navigator.js';
 import { runGeologist } from './geologist.js';
 import { runRiskAssessor } from './riskAssessor.js';
 import { runEconomist } from './economist.js';
-import type { AgentTrace } from './agentLogger.js';
+import type { AgentTrace, AgentLogEvent } from './agentLogger.js';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -90,7 +90,9 @@ export interface OrchestratorResult {
 
 export type ProgressEvent =
   | { type: 'agent_start'; phase: SwarmPhase }
-  | { type: 'agent_complete'; agent: AgentType; status: 'success' | 'failed' };
+  | { type: 'agent_complete'; agent: AgentType; status: 'success' | 'failed' }
+  | { type: 'agent_event'; agent: AgentType; event: AgentLogEvent }
+  | { type: 'synthesis_token'; text: string };
 
 export type ProgressCallback = (event: ProgressEvent) => void;
 
@@ -137,7 +139,10 @@ export async function runOrchestrator(
 
   if (requestedAgents.includes('navigator')) {
     try {
-      const { output, trace } = await runNavigator(asteroid, state, missionParams);
+      const { output, trace } = await runNavigator(
+        asteroid, state, missionParams,
+        (evt) => onProgress?.({ type: 'agent_event', agent: 'navigator', event: evt }),
+      );
       state.navigatorOutput = output;
       agentTraces['navigator'] = trace;
     } catch (err) {
@@ -155,10 +160,16 @@ export async function runOrchestrator(
 
   const parallelResults = await Promise.allSettled([
     requestedAgents.includes('geologist')
-      ? runGeologist(asteroid, state, missionParams)
+      ? runGeologist(
+          asteroid, state, missionParams,
+          (evt) => onProgress?.({ type: 'agent_event', agent: 'geologist', event: evt }),
+        )
       : Promise.resolve(null),
     requestedAgents.includes('riskAssessor')
-      ? runRiskAssessor(asteroid, state, missionParams)
+      ? runRiskAssessor(
+          asteroid, state, missionParams,
+          (evt) => onProgress?.({ type: 'agent_event', agent: 'riskAssessor', event: evt }),
+        )
       : Promise.resolve(null),
   ]);
 
@@ -191,7 +202,10 @@ export async function runOrchestrator(
 
   if (requestedAgents.includes('economist')) {
     try {
-      const { output, trace } = await runEconomist(asteroid, state, missionParams);
+      const { output, trace } = await runEconomist(
+        asteroid, state, missionParams,
+        (evt) => onProgress?.({ type: 'agent_event', agent: 'economist', event: evt }),
+      );
       state.economistOutput = output;
       agentTraces['economist'] = trace;
     } catch (err) {
@@ -223,7 +237,7 @@ export async function runOrchestrator(
     // Run synthesis pass
     const synthStart = Date.now();
     try {
-      state.synthesis = await runSynthesis(asteroid, state);
+      state.synthesis = await runSynthesis(asteroid, state, onProgress);
       synthesisLatencyMs = Date.now() - synthStart;
       mutatePhase(state, 'complete');
     } catch (err) {
@@ -322,7 +336,11 @@ function computeConfidenceScores(inputs: ConfidenceInputs): ConfidenceScores {
 
 // ── Synthesis pass ────────────────────────────────────────────────────────────
 
-async function runSynthesis(asteroid: AsteroidRow, state: SwarmState): Promise<string> {
+async function runSynthesis(
+  asteroid: AsteroidRow,
+  state: SwarmState,
+  onProgress?: ProgressCallback,
+): Promise<string> {
   const apiKey = process.env['ANTHROPIC_API_KEY'];
   if (!apiKey) throw new AIServiceError('ANTHROPIC_API_KEY environment variable is not set');
   const client = new Anthropic({ apiKey, maxRetries: 5 });
@@ -330,14 +348,19 @@ async function runSynthesis(asteroid: AsteroidRow, state: SwarmState): Promise<s
   const name = asteroid.name ?? asteroid.full_name ?? asteroid.nasa_id;
   const prompt = buildSynthesisPrompt(name, state);
 
-  const response = await client.messages.create({
+  const stream = client.messages.stream({
     model: SONNET,
     max_tokens: 1500,
     system: `You are the Lead Orchestrator for Asteroid Bonanza. Your job is to synthesize outputs from four domain agents into a clear, accurate, and grounded assessment of an asteroid's potential. Be honest about uncertainty. Do not inflate confidence. Write for an intelligent non-specialist audience — clear, precise, no jargon without explanation.`,
     messages: [{ role: 'user', content: prompt }],
   });
 
-  const textBlock = response.content.find((b) => b.type === 'text');
+  stream.on('text', (text) => {
+    onProgress?.({ type: 'synthesis_token', text });
+  });
+
+  const finalMessage = await stream.finalMessage();
+  const textBlock = finalMessage.content.find((b) => b.type === 'text');
   if (!textBlock || textBlock.type !== 'text') {
     throw new AIServiceError('Synthesis pass returned no text content');
   }
