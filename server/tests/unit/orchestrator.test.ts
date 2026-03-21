@@ -8,6 +8,7 @@ const {
   mockRunEconomist,
   mockGetAsteroidById,
   mockCreate,
+  mockStream,
   mockSupabaseFrom,
 } = vi.hoisted(() => {
   // Supabase chained call builder
@@ -25,6 +26,7 @@ const {
     mockRunEconomist: vi.fn(),
     mockGetAsteroidById: vi.fn(),
     mockCreate: vi.fn(),
+    mockStream: vi.fn(),
     mockSupabaseFrom: fromFn,
   };
 });
@@ -58,7 +60,7 @@ vi.mock('../../src/db/supabase.js', () => ({
 
 vi.mock('@anthropic-ai/sdk', () => ({
   default: vi.fn().mockImplementation(() => ({
-    messages: { create: mockCreate },
+    messages: { create: mockCreate, stream: mockStream },
   })),
 }));
 
@@ -69,7 +71,7 @@ import type {
   EconomistOutput,
   RiskOutput,
   AgentTrace,
-} from '../../../../shared/types.js';
+} from '../../../shared/types.js';
 import type { AsteroidRow } from '../../src/services/asteroidService.js';
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
@@ -230,6 +232,13 @@ beforeEach(() => {
   // resetAllMocks would wipe it, causing "Cannot read properties of undefined (reading 'create')"
   vi.clearAllMocks();
   mockCreate.mockReset();
+  mockStream.mockReset();
+  mockStream.mockReturnValue({
+    on: vi.fn().mockReturnThis(),
+    finalMessage: vi.fn().mockResolvedValue({
+      content: [{ type: 'text', text: 'Default synthesis: this asteroid is a viable candidate.' }],
+    }),
+  });
   mockRunNavigator.mockReset();
   mockRunGeologist.mockReset();
   mockRunRiskAssessor.mockReset();
@@ -359,7 +368,10 @@ describe('runOrchestrator — synthesis path', () => {
   it('falls back to handoff if synthesis Claude call fails', async () => {
     setupAgentMocks(1.0, 1.0, 1.0, 1.0);
 
-    mockCreate.mockRejectedValue(new Error('Anthropic API rate limit'));
+    mockStream.mockReturnValue({
+      on: vi.fn().mockReturnThis(),
+      finalMessage: vi.fn().mockRejectedValue(new Error('Anthropic API rate limit')),
+    });
 
     const { state } = await runOrchestrator(mockAsteroid.id, {});
 
@@ -553,10 +565,12 @@ describe('runOrchestrator — synthesis edge cases', () => {
   it('falls back to handoff when synthesis response has no text block', async () => {
     setupAgentMocks(1.0, 1.0, 1.0, 1.0);
 
-    // Resolved successfully but no text content block in response
-    mockCreate.mockResolvedValue({
-      content: [{ type: 'tool_use', id: 'call_1', name: 'some_tool', input: {} }],
-      stop_reason: 'tool_use',
+    // Stream resolves but returns no text content block
+    mockStream.mockReturnValue({
+      on: vi.fn().mockReturnThis(),
+      finalMessage: vi.fn().mockResolvedValue({
+        content: [{ type: 'tool_use', id: 'call_1', name: 'some_tool', input: {} }],
+      }),
     });
 
     const { state } = await runOrchestrator(mockAsteroid.id, {});

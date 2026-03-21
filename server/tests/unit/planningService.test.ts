@@ -18,7 +18,7 @@ vi.mock('../../src/services/asteroidService.js', () => ({
 }));
 
 import { compareAsteroids, buildScenario, optimizePortfolio } from '../../src/services/planningService.js';
-import type { NavigatorOutput } from '../../../../shared/types.js';
+import type { NavigatorOutput } from '../../../shared/types.js';
 import type { AsteroidRow } from '../../src/services/asteroidService.js';
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────

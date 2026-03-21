@@ -23,7 +23,7 @@ vi.mock('../../src/services/orchestrator/tools.js', () => ({
 }));
 
 import { runNavigator } from '../../src/services/orchestrator/navigator.js';
-import type { NavigatorOutput } from '../../../../shared/types.js';
+import type { NavigatorOutput } from '../../../shared/types.js';
 import type { AsteroidRow } from '../../src/services/asteroidService.js';
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────

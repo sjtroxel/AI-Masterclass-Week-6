@@ -23,7 +23,7 @@ vi.mock('../../src/services/orchestrator/tools.js', () => ({
 }));
 
 import { runRiskAssessor } from '../../src/services/orchestrator/riskAssessor.js';
-import type { RiskOutput } from '../../../../shared/types.js';
+import type { RiskOutput } from '../../../shared/types.js';
 import type { AsteroidRow } from '../../src/services/asteroidService.js';
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────

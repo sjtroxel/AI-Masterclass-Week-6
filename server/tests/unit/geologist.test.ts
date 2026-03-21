@@ -20,7 +20,7 @@ vi.mock('../../src/services/orchestrator/tools.js', () => ({
 }));
 
 import { runGeologist } from '../../src/services/orchestrator/geologist.js';
-import type { GeologistOutput } from '../../../../shared/types.js';
+import type { GeologistOutput } from '../../../shared/types.js';
 import type { AsteroidRow } from '../../src/services/asteroidService.js';
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────

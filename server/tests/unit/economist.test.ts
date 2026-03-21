@@ -23,7 +23,7 @@ vi.mock('../../src/services/orchestrator/tools.js', () => ({
 }));
 
 import { runEconomist } from '../../src/services/orchestrator/economist.js';
-import type { EconomistOutput, GeologistOutput, NavigatorOutput, SwarmState } from '../../../../shared/types.js';
+import type { EconomistOutput, GeologistOutput, NavigatorOutput, SwarmState } from '../../../shared/types.js';
 import type { AsteroidRow } from '../../src/services/asteroidService.js';
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────

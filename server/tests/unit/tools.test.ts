@@ -26,7 +26,7 @@ import {
   queryScienceIndex,
   queryScenarioIndex,
 } from '../../src/services/orchestrator/tools.js';
-import type { RagResult } from '../../../../shared/types.js';
+import type { RagResult } from '../../../shared/types.js';
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
