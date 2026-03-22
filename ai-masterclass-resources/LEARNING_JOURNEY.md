@@ -1,6 +1,6 @@
-# Four Weeks of Building: A Learning Journey
+# Six Weeks of Building: A Learning Journey
 
-*A comprehensive retrospective across the Codefi AI Masterclass projects — Week 2 through Week 5.*
+*A comprehensive retrospective across the Codefi AI Masterclass projects — Week 2 through Week 6.*
 
 ---
 
@@ -10,7 +10,8 @@
 2. [Week 3 — Strawberry Star Travel App (React + Express Full-Stack)](#week-3--strawberry-star-travel-app-react--express-full-stack)
 3. [Week 4 — ChronoQuizzr (AI-Powered History Geography Game)](#week-4--chronoquizzr-ai-powered-history-geography-game)
 4. [Week 5 — Poster Pilot (Multimodal RAG Platform)](#week-5--poster-pilot-multimodal-rag-platform)
-5. [The Bigger Picture: Four Weeks of Cumulative Growth](#the-bigger-picture-four-weeks-of-cumulative-growth)
+5. [Week 6 — Asteroid Bonanza (Multi-Agent AI Intelligence Platform)](#week-6--asteroid-bonanza-multi-agent-ai-intelligence-platform)
+6. [The Bigger Picture: Six Weeks of Cumulative Growth](#the-bigger-picture-six-weeks-of-cumulative-growth)
 
 ---
 
@@ -207,22 +208,105 @@ Poster Pilot was the capstone project — the most architecturally complete, mos
 
 ---
 
-## The Bigger Picture: Four Weeks of Cumulative Growth
+---
+
+## Week 6 — Asteroid Bonanza (Multi-Agent AI Intelligence Platform)
+
+### What Was Built
+
+**Asteroid Bonanza** is an AI-powered intelligence platform for analyzing near-Earth asteroids across four dimensions simultaneously: orbital accessibility, mineral composition, resource economics, and planetary defense risk. It ingests real data from NASA and JPL APIs, maintains a semantic search database of 35,000+ catalogued objects, runs a swarm of four specialized AI agents to produce multi-dimensional analyses with explicit confidence scoring, provides a grounded RAG-powered Analyst for open-ended research questions, and visualizes asteroid orbits in an interactive Three.js orbital canvas.
+
+The app is live in production at **https://asteroid-bonanza.vercel.app** (frontend) and **https://asteroid-bonanza.up.railway.app** (backend).
+
+**Tagline**: *The intelligence layer for the space resource revolution.*
+
+### Technical Stack
+
+- **Frontend**: Angular 21 (signals-first), TypeScript strict, Tailwind CSS v4 (CSS-first `@theme {}`), Three.js orbital canvas
+- **Backend**: Node.js 22 LTS, Express 5, TypeScript (NodeNext module resolution)
+- **AI**: Anthropic SDK — Claude Sonnet 4.6 (all agents + Analyst), Claude Haiku 4.5 (planned classification subtasks)
+- **Embeddings**: Voyage AI `voyage-large-2-instruct` — 1024 dimensions, cosine similarity
+- **Database**: Supabase (PostgreSQL + pgvector) with 7 migrations and full rollback support
+- **Testing**: Vitest (209 server tests, 96.61% coverage) + Playwright E2E (226 passed, both 375px and 1280px viewports)
+- **Deployment**: Railway (backend) + Vercel (frontend)
+
+### The Nine Phases
+
+**Phase 0 — Foundation**: Monorepo scaffolding with npm workspaces (`client`, `server`, `shared`, `scripts`), TypeScript strict mode everywhere, Tailwind v4 CSS-first configuration, Husky pre-commit hooks (lint + typecheck), gitleaks secret scanning, GitHub Actions CI, and a comprehensive `CLAUDE.md` AI context file written before a single line of application code. Also established: `.claude/rules/` domain-specific behavioral rule files that encode architectural decisions as constraints on future AI-assisted development.
+
+**Phase 1 — Data Layer**: Seven Supabase migrations with rollbacks, pgvector extension, Row Level Security on all tables, and a full NASA ingest pipeline (`ingestNasa.ts`) pulling from NeoWs, JPL SBDB, JPL NHATS, and JPL CAD. Over 35,000 near-Earth objects loaded. AI-generated fields (embeddings, composition summaries, economic tiers) left nullable with `-- populated by <pipeline>` schema comments — populated in Phase 5 after agents exist.
+
+**Phase 2 — Search & Browse**: Full-text search, semantic vector search (Voyage AI embeddings + cosine similarity), and an asteroid dossier view with orbital elements, spectral class, physical parameters, close-approach timeline component, and "Pending analysis" placeholders for Phase 5 AI fields.
+
+**Phase 3 — RAG Knowledge Base**: Dual-index RAG architecture: `science_chunks` (NASA mission reports, spectral surveys, peer-reviewed papers) and `scenario_chunks` (NASA Vision 2050, ISRU roadmaps, space economics analyses). Document-structure chunking (H1/H2/H3 hierarchy preserved), 512-token max chunks, 50-token overlap for academic papers. Voyage AI embeddings via raw `fetch()` to the Voyage API — no npm SDK exists. The two-index separation is architectural: hard science facts and 2050 projections must never be mixed.
+
+**Phase 4 — The AI Analyst**: A grounded RAG chatbot powered by Claude Sonnet 4.6. Streams responses via Server-Sent Events (SSE). Session history stored in `analyst_sessions` with a 24-hour TTL. The Analyst is architecturally constrained: it cannot use model weights for asteroid facts — all data must be sourced from the indices with explicit `source_id` citations. Responses clearly label `[Science fact]` vs. `[2050 Projection]`. Optional context anchoring: when viewing a specific asteroid's dossier, the Analyst receives that object's data as additional context.
+
+**Phase 5 — The Agent Swarm**: The centerpiece of the project. Four domain agents (Navigator, Geologist, Economist, Risk Assessor) plus a Lead Orchestrator, all built on the Anthropic SDK directly — no LangChain. Key architectural patterns:
+
+- **SwarmState**: All inter-agent communication flows through a typed shared state object. Agents mutate only their designated slice; the Orchestrator reads all and passes summaries. No direct agent-to-agent calls.
+- **Anthropic Tool Use**: Each agent has tools (`fetchNHATSData`, `queryScienceIndex`, `queryScenarioIndex`, etc.) that call real NASA APIs and RAG indices at runtime. The LLM reasons about the returned data; it does not invent it.
+- **Confidence scoring**: Computed by the Orchestrator from observable fields (`dataCompleteness`, `sourceQuality`, `assumptionsRequired`) — never self-reported. LLMs are systematically overconfident; we never ask "how confident are you?" and accept the answer.
+- **HANDOFF_THRESHOLD calibration**: Initially set to 0.55. After live runs on Apophis, Bennu, and Ryugu, CAD/NHATS API data gaps structurally capped orbital confidence. Recalibrated to 0.30. When aggregate confidence falls below threshold, the Orchestrator produces a `HandoffPackage` (what was found, where confidence broke down, what a human expert would need) rather than a synthesis. Handoff is a first-class feature, not an error state.
+- **Parallel execution**: Geologist and Risk Assessor run in parallel (they are independent); Economist runs after Geologist (it needs composition data).
+
+**Phase 6 — Mission Planning & Orbital Canvas**: A mission scenario builder where users can compare delta-V tradeoffs across a portfolio of asteroid targets and model launch windows. Three.js orbital canvas with full 3D PerspectiveCamera on desktop and orthographic top-down OrthographicCamera with touch controls on mobile. Canvas 2D fallback for WSL2 environments where WebGL is unavailable — this fallback is permanently required and must never be removed.
+
+**Phase 7 — Planetary Defense Watch**: Real-time close-approach dashboard with configurable lookahead window, Potentially Hazardous Asteroid tracking with threat-level indicators, and a dedicated Apophis 2029 case study — a hand-crafted featured analysis of the most closely watched near-Earth object, with a live countdown to the April 13, 2029 close approach.
+
+**Phase 8 — Hardening & Production Deployment**: Full test coverage to 96.61% on the server (209 Vitest tests across 18 test files). Playwright E2E suite: 226 tests passing at both mobile and desktop viewports. Accessibility audit with `@axe-core/playwright` — zero critical violations. API response caching headers, Three.js 30fps mobile cap, lazy-loaded Angular routes, input validation and rate limiting across all endpoints, gitleaks clean on full git history. Deployed to Railway + Vercel with database migrations applied to production Supabase. SSE agent progress streaming (`agent_start`, `agent_complete`, `analysis_complete`) so the frontend shows live dot-status per agent during analysis.
+
+**Phase 9 — Deep Agent Observability Streaming**: Extended SSE streaming to individual agent reasoning events in real time: `agent_event` carries each `tool_call`, `tool_result`, `rag_lookup`, and `output` as it happens inside each agent. Synthesis streams token-by-token via Anthropic's `messages.stream()` API. The frontend shows live collapsible per-agent event panels during analysis runs — users watch each agent's tool calls and RAG lookups as they fire, then see the synthesis text appear word by word.
+
+### Key Technical Discoveries
+
+**The `app.ts` / `server.ts` split at scale**: A pattern first introduced in Week 3 (Strawberry Star) became the enforced convention in this project — documented in `.claude/rules/server.md`, enforced in `.claude/rules/testing.md`, and the root cause of all `port-in-use` test failures when violated. At scale (18 test files, 209 tests), this split is what makes parallel test runs reliable.
+
+**AgentTrace observability architecture**: Each agent runner maintains an `AgentTrace` — a structured log of every tool call, RAG lookup, and output event with timestamps and metadata. Phase 8 surfaced this trace post-run; Phase 9 made it live. The `onProgress` callback pattern (threading a callback through the orchestrator → agent runners → tool dispatch loops) is the key architectural technique. No agent-to-agent communication; all events flow through the orchestrator's callback chain.
+
+**Angular 21 signals-first at application scale**: This was the first project to use Angular 21's signals model (`signal()`, `computed()`, `effect()`) throughout an application with seven feature slices, a Three.js canvas, and two separate SSE streaming connections (analysis + analyst chat). The key lesson: signals eliminate the RxJS `Subject`/`BehaviorSubject` ceremony for local state while `toSignal()` bridges HTTP `Observable` boundaries cleanly. No NgRx was needed at any point.
+
+**Three.js in Angular with WSL2 constraints**: `ngAfterViewInit` + `setTimeout(0)` is required to initialize the Three.js scene — `afterNextRender` does not reliably fire after the canvas element is in the DOM in Angular 21. `WebGLRenderingContext` is unavailable in WSL2; the Canvas 2D fallback branch must be maintained permanently. `three@0.183.x` ships no `.d.ts` files — `@types/three` is a required `devDependency`, not optional. Mobile optimization: `OrthographicCamera` top-down view, `powerPreference: 'low-power'`, antialiasing off, pixel ratio capped at 1, animation throttled to 33ms/frame (30fps).
+
+**Voyage AI as a raw HTTP call**: No official Voyage AI npm SDK exists. All embedding generation goes through a `voyageService.ts` that calls `https://api.voyageai.com/v1/embeddings` via raw `fetch()`. The 1024-dimension embedding space must be consistent: the same model used at ingest time must be used at query time. The retrieval quality baseline established: 17/20 test questions passing at ≥ 0.40 cosine similarity threshold.
+
+**HANDOFF_THRESHOLD as a living calibration**: Setting a handoff threshold at project inception and never revisiting it is an AI engineering anti-pattern. The threshold started at 0.55 (a reasonable initial estimate) and was recalibrated to 0.30 after real production runs revealed that data gaps in NASA's NHATS and CAD APIs structurally cap orbital confidence for many asteroids. The lesson: AI system thresholds must be calibrated empirically on real data, not set theoretically and forgotten. Document the calibration process and the reasons; future maintainers need to understand why.
+
+**Two RAG indices, never collapsed into one**: The architectural decision to maintain separate `science_chunks` and `scenario_chunks` indices proved its value during agent development. When the Economist Agent queries both indices simultaneously, the model receives context with explicit `source_type` labels. It knows which claims are established science and which are 2050 projections. Collapsing both into a single index would allow the model to conflate speculation with fact in ways that are very difficult to detect or prevent.
+
+**Spec-first workflow at maximum fidelity**: By Week 6, the spec-first workflow that emerged in Week 3 reached its fullest expression. Before a single line of application code was written: a complete `CLAUDE.md` AI context file, nine phase documents in `project-specs/roadmap/`, six domain rule files in `.claude/rules/`, a full architecture doc, database schema doc, API integration doc, and testing strategy doc. The CLAUDE.md was written as a constraint system for AI-assisted development — encoding every key architectural decision as an explicit rule that Claude Code would enforce throughout the project. This is a professional AI engineering pattern: treat your AI collaborator's context as a first-class engineering artifact.
+
+**`AgentFn<TOutput>` signature discipline**: Every agent in the swarm has the same TypeScript function signature: `(asteroid: AsteroidRecord, state: SwarmState, missionParams: MissionParams) => Promise<TOutput>`. Every agent output interface includes `status: 'success' | 'partial' | 'failed'`, `confidence: ConfidenceScore`, `sources: string[]`, and the domain-specific payload. No agent returns `any`. This discipline made it possible to write the Orchestrator's synthesis and handoff logic once, generically, without knowing the internals of any individual agent.
+
+**E2E test resilience — webkit vs. chromium**: The Playwright E2E suite initially used `devices['iPhone SE']` for mobile testing, which targets WebKit. WSL2 does not have WebKit installed. All ~120 mobile E2E tests failed at the runner level, not the assertion level. Fix: replace the device preset with an explicit `{ browserName: 'chromium', viewport: { width: 375, height: 812 }, isMobile: true, hasTouch: true }` config. The lesson generalizes: when E2E tests fail at the browser launch level, suspect the runner environment before the test assertions.
+
+**AI audit as a structured phase deliverable**: Before Phase 8, a formal `ai-audit` was run — a systematic review of every AI-touching file against the architecture spec. Sixteen issues were found and fixed: hardcoded model strings replaced with imports from `shared/models.js`, self-reported confidence language removed from agent prompts, missing `source_id` citations added, RAG routing logic corrected. Four new `.claude/rules/` files were created from the audit findings. The audit also added `git commit` and `git push` deny rules to `.claude/settings.json` — codifying the "user commits only" rule at the tool permission level.
+
+### What This Week Represented
+
+Asteroid Bonanza is the capstone project — the most architecturally ambitious, most feature-complete, and most rigorously engineered application of the six weeks. It brought together every pattern from the preceding weeks (TypeScript strict mode, NodeNext module resolution, the app/server testing split, Tailwind v4 CSS-first, Railway + Vercel deployment, SSE streaming, spec-first development) and added a new layer: production AI systems engineering at the orchestration level.
+
+The key distinction from earlier AI work (ChronoQuizzr's two-agent pipeline, Poster Pilot's single-agent RAG) is **orchestration**: four specialized agents coordinated by a state machine, with typed inter-agent communication, parallel execution, sequential dependencies, dynamic confidence scoring, and two distinct output paths (synthesis vs. handoff). This is the pattern at the core of production AI applications — not calling a model API, but designing the system around it.
+
+---
+
+## The Bigger Picture: Six Weeks of Cumulative Growth
 
 ### The Arc of Complexity
 
-Looking at the four weeks as a sequence, there's a clear progression in both technical ambition and engineering discipline:
+Looking at the six weeks as a sequence, there's a clear progression in both technical ambition and engineering discipline:
 
 | Week | Project | Core Challenge | AI Involvement |
 |------|---------|---------------|----------------|
 | 2 | Mighty Mileage Meetup | Full-stack maps, Angular toolchain | None |
 | 3 | Strawberry Star | Full-stack TypeScript, ESM, demo mode | None |
-| 4 | ChronoQuizzr | Multi-agent LLM pipelines, game mechanics | Claude Haiku (content generation) |
+| 4 | ChronoQuizzr | Multi-agent LLM pipelines, game mechanics | Claude Haiku (adversarial content generation) |
 | 5 | Poster Pilot | Vector search, RAG, multimodal AI, production scale | Claude Sonnet (conversational RAG) + CLIP |
+| 6 | Asteroid Bonanza | Multi-agent swarm, dual RAG, observability, full AI system design | Claude Sonnet (4-agent swarm + RAG Analyst) + Voyage AI |
 
-Weeks 2 and 3 built the engineering foundations. Weeks 4 and 5 applied those foundations to genuinely novel AI-powered products. By Week 5, the work wasn't just "use an API" — it was designing a system where AI is the core value proposition, with all the rigor that requires: grounding constraints, confidence scoring, hallucination prevention, and human escalation paths.
+Weeks 2 and 3 built the engineering foundations. Weeks 4 and 5 applied those foundations to AI-powered products. Week 6 elevated further: it's not just "AI-powered" — it's a system *designed around AI* from the ground up, with orchestration, confidence scoring, dual knowledge indices, real-time observability, and human handoff as first-class architectural concerns.
 
-### Technologies Mastered Across All Four Projects
+### Technologies Mastered Across All Six Projects
 
 **TypeScript (Strict Mode)**
 Every project used TypeScript with `strict: true`. Over four weeks, strict TypeScript went from a constraint to a communication tool — types became the primary way of expressing intent, encoding state machines, and catching bugs before runtime. The `Omit<HistoricalEvent, 'hiddenCoords'>` pattern in ChronoQuizzr and the `PosterResult` type hierarchy in Poster Pilot are examples of types doing real architectural work.
@@ -243,7 +327,7 @@ The test suites grew in sophistication week over week:
 By Week 5, tests weren't written after the fact — they were written alongside implementation, with mock isolation, coverage thresholds, and CI enforcement.
 
 **Railway + Vercel Deployment**
-Both ChronoQuizzr and Poster Pilot were deployed to Railway (backend) + Vercel (frontend). Each deployment surfaced different failure modes — the Railpack vs. nixpacks distinction, `NODE_ENV=production` skipping devDependencies, rootDir expansion from shared TypeScript files, the EBUSY error from double-running `npm ci` — building a comprehensive mental model of how these platforms work at the build and runtime layer.
+ChronoQuizzr, Poster Pilot, and Asteroid Bonanza were all deployed to Railway (backend) + Vercel (frontend). Each deployment surfaced different failure modes — the Railpack vs. nixpacks distinction, `NODE_ENV=production` skipping devDependencies, rootDir expansion from shared TypeScript files, the EBUSY error from double-running `npm ci` — building a comprehensive mental model of how these platforms work at the build and runtime layer. By Week 6, the Railway + Vercel deployment cycle was familiar enough that the full production launch (database migrations + backend + frontend) completed without incident on the first attempt.
 
 **Leaflet Maps**
 Leaflet appeared in three of the four projects (Meetup app, ChronoQuizzr, and indirectly in Poster Pilot's map considerations). Testing Leaflet — which manipulates the DOM directly on initialization — required different solutions in Angular (`NO_ERRORS_SCHEMA`) vs. React (full `vi.mock`), but the underlying challenge was the same. This recurring problem built genuine expertise in the boundary between DOM-heavy libraries and test environments.
@@ -258,9 +342,11 @@ The most significant professional growth across these four weeks is in **AI engi
 
 **Human Escalation Paths**: When the AI isn't confident enough, both projects have explicit escalation paths — ChronoQuizzr's difficulty tiers signal to the player, and Poster Pilot's Human Handoff (`similarity_score < 0.72`) surfaces "The Red Button" and routes the user to a human archivist. This is a professional AI engineering pattern: never pretend the model is more capable than it is.
 
-**Multi-Agent Pipelines**: ChronoQuizzr's Generate→Adversary→Rewrite loop is a genuine multi-agent pattern — separate agents with adversarial roles collaborating to produce better output than either could alone. This is a technique that scales to much larger AI systems.
+**Multi-Agent Pipelines**: ChronoQuizzr's Generate→Adversary→Rewrite loop introduced the multi-agent pattern — separate agents with adversarial roles collaborating to produce better output than either could alone. Asteroid Bonanza scaled this to a full orchestrated swarm: four specialized domain agents with typed SwarmState, parallel execution, sequential dependencies, and a state machine Orchestrator that synthesizes or hands off based on dynamically computed confidence scores.
 
-**Provider Abstraction**: The `LLMProvider` interface pattern in ChronoQuizzr, and the `FatalProviderError` pattern for non-retryable failures, showed how to build AI features that are provider-agnostic. The pivot from Gemini to Claude (documented in an ADR) demonstrated this abstraction working in practice.
+**Provider Abstraction**: The `LLMProvider` interface pattern in ChronoQuizzr, and the `FatalProviderError` pattern for non-retryable failures, showed how to build AI features that are provider-agnostic. The pivot from Gemini to Claude (documented in an ADR) demonstrated this abstraction working in practice. Asteroid Bonanza extended this further with a `shared/models.js` constants file — model strings are never hardcoded in agent files, so swapping models across the swarm requires changing one file rather than hunting through agent implementations.
+
+**Real-Time Observability Streaming**: Asteroid Bonanza introduced a pattern absent from all prior projects: per-event SSE streaming from inside agent execution. The `onProgress` callback threaded through the orchestrator into each agent runner, firing on every tool call, RAG lookup, and output event. This gives users a live window into AI reasoning — not a spinner while the model thinks, but a real-time trace of every decision. The synthesis then streams token-by-token. This observability-first design is a professional AI engineering pattern for building trustworthy systems.
 
 ### The Spec-First Philosophy
 
@@ -270,26 +356,30 @@ One meta-pattern that ran through all four weeks was the **spec-first workflow**
 - A forcing function to think through edge cases before they became bugs
 - A natural checkpoint to reconsider approach before committing to it
 
-By Week 5, this was formalized into a full project-specs directory with detailed phase documents, an ADR for the CLIP model selection, and path-specific Claude rule files (`.claude/rules/`) that encode the decisions as constraints on future work.
+By Week 5, this was formalized into a full project-specs directory with detailed phase documents, an ADR for the CLIP model selection, and path-specific Claude rule files (`.claude/rules/`) that encode the decisions as constraints on future work. By Week 6, the practice reached its apex: a `CLAUDE.md` written as a constraint system for AI-assisted development, nine phase spec documents written before any application code, six domain rule files covering agents, RAG, database, deployment, server, and Angular, and a formal `ai-audit` pass before the hardening phase to ensure every AI-touching file complied with the architecture spec.
 
-### What Four Weeks Produced
+### What Six Weeks Produced
 
-Across these four projects, the work produced:
+Across these six projects, the work produced:
 
-- **4 deployed, production-quality applications**
-- **3 different frontend frameworks** (Angular, React twice, React+3D)
-- **2 different backend languages** (Rails, Node.js/TypeScript x3)
-- **5,000+ historical posters** indexed in a semantic vector database
-- **Multi-agent AI pipelines** with adversarial critique and rewriting
-- **Grounded RAG chatbots** with confidence scoring and human handoff
-- **Multimodal search** combining text and image in the same embedding space
-- **420+ passing tests** across unit, integration, and E2E layers
-- **Extensive deployment experience** with Railway, Vercel, Supabase, and Replicate
+- **5 deployed, production-quality applications** (Weeks 2 and 3 were not deployed; Weeks 4, 5, and 6 are live)
+- **3 different frontend frameworks** (Angular, React, React+3D — and Angular again at the capstone with signals-first architecture)
+- **2 different backend languages** (Rails, Node.js/TypeScript x4)
+- **35,000+ near-Earth asteroids** catalogued with orbital elements, spectral classification, and AI-generated analysis
+- **5,000+ historical posters** indexed in a multimodal semantic vector database
+- **A 4-agent AI swarm** with typed SwarmState, parallel execution, dynamic confidence scoring, and human handoff
+- **Dual-index RAG** separating hard science from 2050 projections, both grounded and cited
+- **Grounded RAG chatbots** with confidence scoring, human escalation paths, and streaming responses
+- **Multimodal vector search** combining text and image in the same CLIP embedding space
+- **Real-time agent observability** streaming tool calls, RAG lookups, and synthesis tokens as they happen
+- **Three.js interactive orbital visualization** with Canvas 2D fallback for non-WebGL environments
+- **700+ passing tests** across unit, integration, and E2E layers (across all six projects)
+- **Full deployment experience** with Railway, Vercel, Supabase, Replicate, and NASA/JPL public APIs
 
-More than the code, though, what four weeks produced is a **professional engineering mindset** — one that plans before building, tests as a first-class concern, quantifies AI uncertainty, provides human escalation paths, and writes code that is explicit, typed, and legible rather than clever and magical.
+More than the code, though, what six weeks produced is a **professional AI systems engineering mindset** — one that plans before building, treats AI context files as first-class engineering artifacts, tests as a first-class concern, quantifies AI uncertainty, provides human escalation paths, designs for observability from the start, and writes code that is explicit, typed, and legible rather than clever and magical.
 
-That's a meaningful arc. Each week built on the last, each bug taught a durable lesson, and by Week 5 the work looked less like coursework and more like production software engineering.
+The arc across six weeks is meaningful: from "learn the Angular toolchain" (Week 2) to "design a production multi-agent intelligence platform from first principles" (Week 6). Each week built on the last, each bug taught a durable lesson, and each project looked less like coursework and more like the kind of thing you'd ship at a company building serious AI products.
 
 ---
 
-*Generated 2026-03-12 from session memory across all four Masterclass projects.*
+*Updated 2026-03-22 from session memory across all six Masterclass projects.*
