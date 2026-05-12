@@ -175,6 +175,19 @@ export interface AgentEvent {
   [key: string]: unknown;
 }
 
+export interface SwarmQuotaStatus {
+  /** Total analyses allowed per window (currently 2). */
+  limit: number;
+  /** Analyses the caller has consumed in the current window. */
+  used: number;
+  /** Analyses still available in the current window. */
+  remaining: number;
+  /** ISO timestamp when the window resets, or null if the caller has no usage yet. */
+  resetTime: string | null;
+  /** Whether rate limiting is active in this environment. False in dev/test. */
+  active: boolean;
+}
+
 export interface AnalysisResponse {
   analysisId: string;
   asteroidId: string;
@@ -434,6 +447,10 @@ export class ApiService {
 
   getLatestAnalysis(asteroidId: string): Observable<AnalysisResponse> {
     return this.http.get<AnalysisResponse>(`${this.base}/analysis/${asteroidId}/latest`);
+  }
+
+  getSwarmQuota(): Observable<SwarmQuotaStatus> {
+    return this.http.get<SwarmQuotaStatus>(`${this.base}/analysis/quota`);
   }
 
   // ── Mission planning ─────────────────────────────────────────────────────────

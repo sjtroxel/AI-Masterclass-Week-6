@@ -24,6 +24,7 @@ import { supabase } from '../db/supabase.js';
 import { getAsteroidByNasaId, getAsteroidById } from '../services/asteroidService.js';
 import { ValidationError, DatabaseError, NotFoundError } from '../errors/AppError.js';
 import { cacheFor } from '../middleware/cache.js';
+import { swarmRateLimit, getSwarmQuota } from '../middleware/swarmRateLimit.js';
 import type { MissionParams, AgentType } from '../../../shared/types.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -38,9 +39,25 @@ async function resolveAsteroidUuid(id: string): Promise<string> {
 
 const router = Router();
 
+// ── GET /api/analysis/quota ───────────────────────────────────────────────────
+//
+// Surfaces the swarm rate-limit state in a JSON body. The client uses
+// EventSource for analyses, which cannot read RateLimit-* headers, so this
+// companion endpoint exposes the same state in a form the client can consume.
+// Mounted before the :asteroidId routes so "quota" isn't matched as an ID.
+
+router.get('/quota', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const status = await getSwarmQuota(req.ip ?? '');
+    res.json(status);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // ── POST /api/analysis/:asteroidId ────────────────────────────────────────────
 
-router.post('/:asteroidId', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/:asteroidId', swarmRateLimit, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { asteroidId: rawId } = req.params as { asteroidId: string };
     if (!rawId) throw new ValidationError('asteroidId is required');
@@ -101,7 +118,7 @@ router.post('/:asteroidId', async (req: Request, res: Response, next: NextFuncti
 
 // ── GET /api/analysis/:asteroidId/stream (SSE) ────────────────────────────────
 
-router.get('/:asteroidId/stream', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/:asteroidId/stream', swarmRateLimit, async (req: Request, res: Response, next: NextFunction) => {
   const { asteroidId: rawId } = req.params as { asteroidId: string };
   if (!rawId) { next(new ValidationError('asteroidId is required')); return; }
 

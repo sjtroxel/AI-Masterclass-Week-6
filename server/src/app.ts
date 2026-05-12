@@ -14,6 +14,10 @@ import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
 
+// Trust the first proxy hop (Railway sits one proxy in front of the app).
+// Required so req.ip resolves to the real client IP for rate limiting.
+app.set('trust proxy', 1);
+
 // ── Security headers ────────────────────────────────────────────────────────
 app.use(helmet());
 

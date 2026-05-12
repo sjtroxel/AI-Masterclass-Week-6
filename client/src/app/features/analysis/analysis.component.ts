@@ -9,7 +9,7 @@ import {
   input,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { ApiService, type AnalysisResponse, type AgentEvent } from '../../core/api.service.js';
+import { ApiService, type AnalysisResponse, type AgentEvent, type SwarmQuotaStatus } from '../../core/api.service.js';
 import { MarkdownPipe } from '../../shared/pipes/markdown.pipe.js';
 import {
   ApproachTimelineComponent,
@@ -54,6 +54,22 @@ type AnalysisState = 'idle' | 'running' | 'complete' | 'handoff' | 'error';
 
       <!-- Body -->
       <div class="px-4 py-4 md:px-8 md:py-5 space-y-4">
+
+        <!-- Demo quota notice (production only; hidden when rate limit is inactive) -->
+        @if (quotaMessage(); as msg) {
+          <aside class="bg-space-900/60 border border-space-800 rounded-lg px-3 py-2 text-xs text-space-300
+                        flex items-center gap-2"
+                 [attr.role]="quota()?.remaining === 0 ? 'status' : null">
+            <svg class="w-3.5 h-3.5 shrink-0"
+                 [class]="quota()?.remaining === 0 ? 'text-amber-400' : 'text-nebula-400'"
+                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 7v5l3 2" />
+            </svg>
+            <span>{{ msg }}</span>
+          </aside>
+        }
 
         <!-- Idle / trigger -->
         @if (state() === 'idle') {
@@ -550,6 +566,7 @@ export class AnalysisComponent implements OnInit {
   readonly agentStatuses = signal<Record<string, 'idle' | 'running' | 'done' | 'failed'>>({});
   readonly liveAgentEvents = signal<Record<string, AgentEvent[]>>({});
   readonly synthesisStream = signal<string>('');
+  readonly quota = signal<SwarmQuotaStatus | null>(null);
 
   private eventSource: EventSource | null = null;
 
@@ -685,11 +702,27 @@ export class AnalysisComponent implements OnInit {
       .map(([agent, events]) => ({ agent, events }));
   });
 
+  readonly quotaMessage = computed<string | null>(() => {
+    const q = this.quota();
+    if (!q || !q.active) return null;
+    if (q.remaining === q.limit) {
+      return `Demo: ${q.limit} of ${q.limit} swarm analyses available today.`;
+    }
+    if (q.remaining === 0) {
+      const resetIn = this.hoursUntilReset(q.resetTime);
+      return resetIn !== null
+        ? `Demo: today's ${q.limit}-analysis quota is exhausted. Quota resets in ~${resetIn}h.`
+        : `Demo: today's ${q.limit}-analysis quota is exhausted. Quota resets in 24 hours.`;
+    }
+    return `Demo: ${q.used} of ${q.limit} swarm analyses used today (${q.remaining} remaining).`;
+  });
+
   // ── Lifecycle ────────────────────────────────────────────────────────────────
 
   ngOnInit(): void {
     const id = this.asteroidId();
     if (id) this.checkExistingAnalysis(id);
+    this.refreshQuota();
   }
 
   // ── Actions ──────────────────────────────────────────────────────────────────
@@ -697,6 +730,21 @@ export class AnalysisComponent implements OnInit {
   runAnalysis(): void {
     const id = this.asteroidId();
     if (!id) return;
+
+    // Pre-flight: if the demo quota is exhausted, surface a friendly message
+    // instead of opening the stream. EventSource can't read the 429 status
+    // that the server would otherwise return, so we check ahead of time.
+    const q = this.quota();
+    if (q && q.active && q.remaining === 0) {
+      const resetIn = this.hoursUntilReset(q.resetTime);
+      this.errorMessage.set(
+        resetIn !== null
+          ? `Today's ${q.limit}-analysis demo quota is exhausted. Quota resets in ~${resetIn} hours.`
+          : `Today's ${q.limit}-analysis demo quota is exhausted. Quota resets in 24 hours.`,
+      );
+      this.state.set('error');
+      return;
+    }
 
     this.state.set('running');
     this.errorMessage.set(null);
@@ -748,6 +796,8 @@ export class AnalysisComponent implements OnInit {
       this.state.set(result.handoffTriggered ? 'handoff' : 'complete');
       es.close();
       this.eventSource = null;
+      // Refresh quota so the "1 of 2 used today" reminder reflects this run.
+      this.refreshQuota();
     });
 
     es.addEventListener('error', (ev) => {
@@ -786,6 +836,23 @@ export class AnalysisComponent implements OnInit {
         this.state.set('idle');
       },
     });
+  }
+
+  private refreshQuota(): void {
+    this.api.getSwarmQuota().subscribe({
+      next: (status) => this.quota.set(status),
+      error: () => {
+        // Quota is informational — failing to fetch it shouldn't block the UI.
+        this.quota.set(null);
+      },
+    });
+  }
+
+  private hoursUntilReset(resetTime: string | null): number | null {
+    if (!resetTime) return null;
+    const ms = new Date(resetTime).getTime() - Date.now();
+    if (!Number.isFinite(ms) || ms <= 0) return 0;
+    return Math.max(1, Math.round(ms / (60 * 60 * 1000)));
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────────

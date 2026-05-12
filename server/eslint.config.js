@@ -9,7 +9,10 @@ export default tseslint.config(
   {
     languageOptions: {
       parserOptions: {
-        project: './tsconfig.json',
+        // Use the eslint-specific tsconfig so the parser can resolve
+        // test files (tests/**) too, not just src/**. The build still uses
+        // tsconfig.json with rootDir=src; this file widens parser scope only.
+        project: './tsconfig.eslint.json',
         tsconfigRootDir: import.meta.dirname,
       },
     },

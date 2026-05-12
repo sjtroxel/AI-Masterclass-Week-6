@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import request from 'supertest';
 
 // ── Hoist mock refs ───────────────────────────────────────────────────────────
@@ -434,5 +434,127 @@ describe('GET /api/analysis/record/:analysisId', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.id).toBe('analysis-record-uuid');
+  });
+});
+
+// ── Rate limiting (swarm endpoints) ───────────────────────────────────────────
+
+describe('swarm rate limit (production mode)', () => {
+  beforeEach(async () => {
+    // Activate the limiter (it's a no-op outside production).
+    vi.stubEnv('NODE_ENV', 'production');
+    // Reset the in-memory counter between tests so each starts fresh.
+    const { swarmRateLimit } = await import('../../src/middleware/swarmRateLimit.js');
+    swarmRateLimit.resetKey('::ffff:127.0.0.1');
+    swarmRateLimit.resetKey('127.0.0.1');
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('allows the first two POST /api/analysis requests and 429s the third', async () => {
+    const res1 = await request(app).post('/api/analysis/test-asteroid-uuid').send({});
+    expect(res1.status).toBe(200);
+    expect(res1.headers['ratelimit-remaining']).toBe('1');
+
+    const res2 = await request(app).post('/api/analysis/test-asteroid-uuid').send({});
+    expect(res2.status).toBe(200);
+    expect(res2.headers['ratelimit-remaining']).toBe('0');
+
+    const res3 = await request(app).post('/api/analysis/test-asteroid-uuid').send({});
+    expect(res3.status).toBe(429);
+    expect(res3.body.error.code).toBe('RATE_LIMIT_EXCEEDED');
+    expect(res3.body.error.message).toMatch(/quota is exhausted/i);
+  });
+
+  it('emits standard RateLimit-* headers on successful responses', async () => {
+    const res = await request(app).post('/api/analysis/test-asteroid-uuid').send({});
+    expect(res.headers['ratelimit-limit']).toBe('2');
+    expect(res.headers['ratelimit-remaining']).toBe('1');
+    expect(res.headers['ratelimit-reset']).toBeDefined();
+  });
+
+  it('does NOT rate-limit GET /api/analysis/:id/latest', async () => {
+    // Four cheap DB reads — none should 429 even after the swarm quota is spent.
+    const responses = await Promise.all([
+      request(app).get('/api/analysis/test-asteroid-uuid/latest'),
+      request(app).get('/api/analysis/test-asteroid-uuid/latest'),
+      request(app).get('/api/analysis/test-asteroid-uuid/latest'),
+      request(app).get('/api/analysis/test-asteroid-uuid/latest'),
+    ]);
+    responses.forEach((res) => {
+      expect(res.status).not.toBe(429);
+    });
+  });
+
+  it('is a no-op when NODE_ENV is not production', async () => {
+    vi.stubEnv('NODE_ENV', 'test');
+    // Five POSTs would normally trigger the limiter; in non-prod they all pass.
+    for (let i = 0; i < 5; i++) {
+      const res = await request(app).post('/api/analysis/test-asteroid-uuid').send({});
+      expect(res.status).toBe(200);
+    }
+  });
+});
+
+// ── GET /api/analysis/quota ───────────────────────────────────────────────────
+
+describe('GET /api/analysis/quota', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('returns the unrestricted quota when NODE_ENV is not production', async () => {
+    vi.stubEnv('NODE_ENV', 'test');
+    const res = await request(app).get('/api/analysis/quota');
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      limit: 2,
+      used: 0,
+      remaining: 2,
+      resetTime: null,
+      active: false,
+    });
+  });
+
+  it('reflects consumed quota in production after a successful analysis', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    const { swarmRateLimit } = await import('../../src/middleware/swarmRateLimit.js');
+    swarmRateLimit.resetKey('::ffff:127.0.0.1');
+    swarmRateLimit.resetKey('127.0.0.1');
+
+    // Empty quota first.
+    const before = await request(app).get('/api/analysis/quota');
+    expect(before.body).toMatchObject({ limit: 2, used: 0, remaining: 2, active: true });
+
+    // Consume one.
+    const analysisRes = await request(app).post('/api/analysis/test-asteroid-uuid').send({});
+    expect(analysisRes.status).toBe(200);
+
+    // Quota now reflects 1 used.
+    const after = await request(app).get('/api/analysis/quota');
+    expect(after.body).toMatchObject({ limit: 2, used: 1, remaining: 1, active: true });
+    expect(typeof after.body.resetTime).toBe('string');
+  });
+
+  it('peeking at the quota does NOT consume any of it', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    const { swarmRateLimit } = await import('../../src/middleware/swarmRateLimit.js');
+    swarmRateLimit.resetKey('::ffff:127.0.0.1');
+    swarmRateLimit.resetKey('127.0.0.1');
+
+    // Hit /quota many times — must not affect the analysis quota.
+    for (let i = 0; i < 10; i++) {
+      const res = await request(app).get('/api/analysis/quota');
+      expect(res.body.used).toBe(0);
+      expect(res.body.remaining).toBe(2);
+    }
+
+    // Both analyses should still succeed afterwards.
+    const a1 = await request(app).post('/api/analysis/test-asteroid-uuid').send({});
+    const a2 = await request(app).post('/api/analysis/test-asteroid-uuid').send({});
+    expect(a1.status).toBe(200);
+    expect(a2.status).toBe(200);
   });
 });
