@@ -23,7 +23,7 @@
     "validateExternalApis": "tsx scripts/src/validateExternalApis.ts",
     "backfillCompositions": "tsx --env-file=server/.env scripts/src/backfillCompositions.ts",
     "deduplicateNasaIds": "tsx --env-file=server/.env scripts/src/deduplicateNasaIds.ts",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
