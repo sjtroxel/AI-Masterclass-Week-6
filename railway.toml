@@ -3,6 +3,11 @@
 
 [build]
 builder = "nixpacks"
+# NODE_ENV=production (set at runtime via [[envVars]] below) makes npm ci skip
+# devDependencies by default. But the build phase NEEDS devDeps — tsc, husky,
+# and other build tools all live there. Explicit installCommand forces a full
+# install regardless of NODE_ENV.
+installCommand = "npm ci --include=dev"
 buildCommand = "npm run build --workspace=server"
 
 [deploy]
